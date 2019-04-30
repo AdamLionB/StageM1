@@ -17,6 +17,8 @@ class Conllu_file:
         for sentence in self.sentences:
             st += str(sentence)
         return st
+    def __getitem__(self, sliced):
+        return self.sentences[sliced]
 
 class Conllu_sentence:
     def __init__(self,sentence, file):
@@ -27,7 +29,6 @@ class Conllu_sentence:
             cells = line[:-1].split('\t')
             self.rows[cells[0]] = {k:v for k,v in zip(keys,cells[1:])}
     def __repr__(self):
-        print(len(self.rows))
         st = self.sentence + '\n'
         for k,row in self.rows.items():
             st += k+'\t|\t' 
@@ -35,3 +36,5 @@ class Conllu_sentence:
                 st += cell + '\t'
             st += '\n'
         return st+'\n'
+    def __getitem__(self, sliced):
+        return self.rows[sliced]
