@@ -207,10 +207,10 @@ def f(verbs, nouns, couples):
         couples.update(pd.DataFrame({'p_selected' : couples['n_selected'] / n_s}))
             
         # Pour chaque verbe ; calcule la probabilité qu'un verbe quelconque soit le verbe en question lié à un nom quelconque [p(v)]
-        verbs.update(pd.DataFrame({'p_selected' : verbs['n_selected'] / n_v}))
+        verbs.update(pd.DataFrame({'p_selected' : verbs['n_selected'] / n_s}))
 
         # Pour chaque nom ; calcule la probabilité qu'un nom quelconque soit le nom en question lié à un verbe quelconque [p(n)]
-        nouns.update(pd.DataFrame({'p_selected' : nouns['n_selected'] / n_n}))
+        nouns.update(pd.DataFrame({'p_selected' : nouns['n_selected'] / n_s}))
 
         # Pour chaque verbe ; calcule la probabilité qu'une phrase quelconque contienne le verbe [supp(v)]
         verbs.update(pd.DataFrame({'supp' : verbs['n_transaction'] / size}))
@@ -255,7 +255,7 @@ def f(verbs, nouns, couples):
         print(size)
         return couples
 
-#find_candidats()
+find_candidats()
 v, n, c = load_candidats()
 
 '''vv, nn, cc'''
