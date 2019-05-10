@@ -1,40 +1,32 @@
-from nltk.corpus.reader.conll import ConllCorpusReader
+import pandas as pd
+import numpy as np
 
-
-keys = ['word', 'lemma', 'POS', 'A', 'flexion', 'refs', 'B', 'C', 'D']
+keys = ['Id', 'Form', 'Lemma', 'UPosTag', 'XPosTagA', 'Feats', 'Head', 'DepRel', 'Deps', 'Misc']
 prefix_len = len('# text = ')
 
-
-class Conllu_file:
-    def __init__(self, file_path, limit=0):
-        self.sentences = []
-        with open(file_path, encoding='utf-8') as file:
-            for line in file:
-                self.sentences.append(Conllu_sentence(line, file))
-                if len(self.sentences) == limit : break
-    def __repr__(self):
-        st = ''
-        for sentence in self.sentences:
-            st += str(sentence)
-        return st
-    def __getitem__(self, sliced):
-        return self.sentences[sliced]
-
-class Conllu_sentence:
-    def __init__(self,sentence, file):
-        self.rows = {}
-        self.sentence = sentence[prefix_len:]
-        for line in file:
-            if line == '\n' or line == '\n\r' : break
-            cells = line[:-1].split('\t')
-            self.rows[cells[0]] = {k:v for k,v in zip(keys,cells[1:])}
-    def __repr__(self):
-        st = self.sentence + '\n'
-        for k,row in self.rows.items():
-            st += k+'\t|\t' 
-            for cell in row.values():
-                st += cell + '\t'
-            st += '\n'
-        return st+'\n'
-    def __getitem__(self, sliced):
-        return self.rows[sliced]
+def read_conllu(path, start = 0, end = -1):
+    if end > 0 and start - end >= 0 : return
+    file = open(path, encoding='utf-8')
+    sentences = []
+    a = []
+    i = 0
+    for line in file:
+        if i < start:
+            for l in file:
+                if l == '\n' or l == '\n\r':
+                    break
+        else:
+            if i >= end : break
+            b = []
+            s = line[prefix_len:]
+            sentences.append(s)
+            for l in file:
+                if l == '\n' or l == '\n\r' :break
+                cells = l[:-1].split('\t')
+                b = [i] + [v for v in cells]
+                a.append(b)
+        i+=1
+    c = pd.DataFrame(data = a)
+    c.columns = ['SId'] + keys
+    c.set_index(['SId', 'Id'], inplace = True)
+    return c, sentences

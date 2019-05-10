@@ -31,9 +31,9 @@ for now all combination of verb-noun is candidate. '''
         verbs = []
         nouns = []
         for word, cells in sentence.rows.items():    
-            if cells['POS'] == 'VERB':
+            if cells['UPosTag'] == 'VERB':
                 verbs.append(word)
-            if cells['POS'] == 'NOUN':
+            if cells['UPosTag'] == 'NOUN':
                 nouns.append(word)
         for verb in verbs:
             for noun in nouns:
@@ -42,21 +42,44 @@ for now all combination of verb-noun is candidate. '''
 
 
 def test_lvc_0(verb, noun, sentence):
+    # n est abstrait :
+        # web semantique
+        # word embedding
     return FLAG.UNSURE
 
 def test_lvc_1(verb, noun, sentence):
+    # n a au moins 1 argument semantique, pas nécessairement dans la phrase:
+        # dictionnaire
+        # web semantique
+        # word embedding ? (vecteur argument ?)
+    print(verb)
+    print(noun)
+    for word, cells in sentence.rows.items():
+        
     return FLAG.UNSURE
 
 def test_lvc_2(verb, noun, sentence):
+    #Le sujet du verbe est l'argument semantique du nom
+        # detection sujet
+            # UD
+        # detection de l'argument semantique
+            # UD
     return FLAG.UNSURE
 
 def test_lvc_3(verb, noun, sentence):
+    # Le verbe ne porte casi-pas de sense:
+        # word embedding
     return FLAG.UNSURE
 
 def test_lvc_4(verb, noun, sentence):
+    #Le verbe peut être enlevé
+        # word embedding
     return FLAG.UNSURE
 
 def test_lvc_5(verb, noun, sentence):
+    #Le sujet du verbe est la cause du nom
+        # UD
+        # word embedding ?
     return FLAG.UNSURE
 
 step3 = DecisionTree(test_lvc_3,
@@ -75,5 +98,5 @@ tree = DecisionTree(test_lvc_0,
                  {FLAG.YES :step1,
                   FLAG.UNSURE :step1})
 
-conllu = Conllu_file('fr-common_crawl-164.conllu', 10)
+conllu = Conllu_file('fr-common_crawl-164.conllu', 1)
 find_candidats(conllu, tree)
