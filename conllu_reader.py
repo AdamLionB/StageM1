@@ -3,6 +3,7 @@ import numpy as np
 import re
 
 keys = ['Id', 'Form', 'Lemma', 'UPosTag', 'XPosTagA', 'Feats', 'Head', 'DepRel', 'Deps', 'Misc']
+keys2 = ['Id', 'Form', 'Lemma', 'UPosTag', 'XPosTagA', 'Feats', 'Head', 'DepRel', 'Deps', 'Misc', 'Mwe']
 prefix_len = len('# text = ')
 
 
@@ -41,7 +42,7 @@ def read_conllu(path, start = 0, end = -1):
     frame.set_index(['SId', 'Id'], inplace = True)
     return frame, sentences
 
-def read_conllu_from(file, batch_size):
+def read_conllu_from2(file, batch_size):
     sentences = []
     all_rows = []
     i = 0
