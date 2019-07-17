@@ -1,6 +1,8 @@
 from os import path
 import pickle
 from time import time
+from numpy import dot
+from numpy.linalg import norm
 
 SAVE_DIR = 'Save'
 
@@ -79,3 +81,11 @@ def drive_cached(func, file_name):
             res = func(*args, **kwargs)
         return saved(res, file_name)
     return intern
+
+# TODOC
+def cos_similarity(a, b):
+    return dot(a, b)/(norm(a)*norm(b))
+# TODOC
+def cos_similarities(A,B):
+    return [cos_similarity(a,b) for a,b in zip(A,B)]
+        

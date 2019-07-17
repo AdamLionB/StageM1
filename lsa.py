@@ -10,36 +10,6 @@ from utilities import drive_cached
 
 SAVE_DIR = 'Save'
 
-
-def f_for_defaultdict():
-    """
-    FR : fonction nécessaire afin de créer des defaultdic<defaultdict<int>> pickable.\n
-    EN : function necessary in order to generate pickable defaultdic<defaultdict<int>>\n
-    """
-    return defaultdict(int)
-
-def saved(to_save, file_path):
-    """
-    FR : Pickle l'objet to_save à l'emplacement spécifier puis retourne l'objet sans le modifier.\n
-    EN : Pickle the given object in the specified field then return the object without modifying it.\n
-    Parameters
-    ----------
-    to_save : Pickable object\n
-        FR : L'objet à sauvegarder, celui ci doit pouvoir être pickler, sinon il ne sera pas sauvé.\n
-        EN : The object to be saved, it has to be Picklable, otherwise it won't be saved.\n
-    file_path : str\n
-        FR : Emplacement du fichier généré.\n
-        EN : Path of the generated file\n
-    Returns
-    -------
-    object\n
-        FR : L'objet fourni en entré\n
-        EN : The given object\n
-    """
-    with open(file_path, 'wb') as output:
-        pickle.dump(to_save, output)
-    return to_save
-
 #ORDER 1_1_4_1
 def corpus_cooccurrences(corpus_dir_path):
     """
@@ -53,14 +23,13 @@ def corpus_cooccurrences(corpus_dir_path):
         EN : The corpus path\n
     Returns
     -------
-    dict<dict<int>>\n
-        {word1 : {word1 : nb_cooc_word1_word2}}\n
+    cooc_dic : dic{word1 : str , cooc : dic{word2 : str , nb_cooc_word1_word2 : int}}\n
         FR : Dictionnaire contenant les paire toutes les paires de mots rencontrées dans le corpus
         ainsi que leur nombre d'occurences respectives.\n
         EN : Dictionary with all the pair of word seen in the corpus
         and the number of time each pair has been sighted.\n
     """
-    cooc_dic = defaultdict(f_for_defaultdict)
+    cooc_dic = defaultdict(lambda : defaultdict(int))
     sid = 0 # Id de la phrase
     sentence_first_word_id = 0 
     for data, sentences in corpus_batcher(corpus_dir_path):
@@ -78,50 +47,6 @@ def corpus_cooccurrences(corpus_dir_path):
                 sentence_first_word_id = n
     return {word1 : {word2 : count for word2, count in dic.items()} for word1, dic in cooc_dic.items()}
 
-# TODO Remove, use utilities
-def load_or_compute_dec(func, file_name):
-    """
-    FR : Décore une fonction afin d'enregistrer son résultat, ou de le charger si celui-ci
-    à déjà était enregistré.\n
-    EN : Decore a function in order to save its result, or to load the result if it has already been
-    saved.\n
-    Parameters
-    ----------
-    func : callable\n
-        FR : La fonction que l'on désire décorer.\n
-        EN : The function to be decored.\n
-    file_name : str\n
-        FR : Le nom sous lequel le résultat sera enregistré / chargé.\n
-        EN : The name under which the result will be saved / loaded.\n
-    Returns
-    -------
-        callable :\n
-            FR : La function décoré.\n
-            EN : the decored function\n
-    Examples
-    --------
-    >>> def do_something(...):
-    >>>     print('some side effect')
-    >>>     return something
-
-    >>> decored_do_something = load_or_compute_dec(do_something, 'a_name') 
-    >>> first_call = decored_do_someting(...) # do_something and save it
-    some side effect
-    # load saved result without calling do_something again
-    >>> second_call = decored_do_someting(...) 
-    # results of the first and second call are the same
-    >>> first_call == second_call 
-    True
-    """
-    def intern(*args, **kwargs):
-        file_path = path.join(SAVE_DIR, file_name)
-        if path.isfile(file_path) :
-            with open(file_path, 'rb') as file:
-                return pickle.load(file)
-        else :
-            res = func(*args, **kwargs)
-        return saved(res, file_path)
-    return intern
 # ORDER 1_1_4_2
 def dic_to_mat(cooc_dic):
     """
@@ -129,15 +54,14 @@ def dic_to_mat(cooc_dic):
     EN : Transform a cocccurrences dictionary into a cooccurrences sparse matrix\n
     Parameters
     ----------
-    cooc_dic : dic<dic<int>>\n
-        {word1 : {word2 : nb_cooc_word1_word2}}\n
+    cooc_dic : dic{word1 : str , cooc : dic{word2 : str , nb_cooc_word1_word2 : int}}\n
         FR : Dictionnaire contenant les paire toutes les paires de mots rencontrées dans le corpus
         ainsi que leur nombre d'occurences respectives.\n
         EN : Dictionary with all the pair of word seen in the corpus
         and the number of time each pair has been sighted.\n
     Returns
     -------
-    Sparse Matrix\n
+    cooc_mat : Sparse Matrix\n
         FR : Matrice de cooccurrence représentant les mêmes données que le dictionnaire fourni
         en entré.\n
         EN : Cooccurrences matrix representing the same data as the dictionnary given.\n
@@ -155,6 +79,7 @@ def dic_to_mat(cooc_dic):
                 j.append(voc[l])
                 data.append(w / sums[l])
     return coo_matrix((data, (i, j))).tocsr(), voc, sums
+
 #ORDER 1_1_5_1_1_1
 def expressions_cooccurrences(corpus_dir_path, expressions):
     """
@@ -162,22 +87,21 @@ def expressions_cooccurrences(corpus_dir_path, expressions):
     EN : Count cooccurrences between the given expressions and corpus' words.\n
     Parameters
     ----------
-        corpus_dir_path : str\n
-            FR : Emplacement du corpus\n
-            EN : The corpus path\n
-        expressions : list<(str,str)>\n
-            FR : liste des expressions dont on veut les coccurrences\n
-            EN : list of the expressions of which we want the coccurrences\n
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    expressions : list<(str,str)>\n
+        FR : liste des expressions dont on veut les coccurrences\n
+        EN : list of the expressions of which we want the coccurrences\n
     Returns
     -------
-    dict<dict<int>>\n
-        {exp : {word1 : nb_cooc_exp_word2}}\n
+    exp_dic : dic{exp : (noun : str,verb : str) , cooc : dic{word : str , nb_cooc_exp_word : int}}\n
         FR : Dictionnaire contenant pour chaque expression les mots avec lequelles celle-ci
         cooccurre ainsi que le nombre de coccurences respective\n
         EN : Dictionary with, for each expression, the word cooccurring with said expression and
         the number of cooccurrence
     """
-    cooc_dic = defaultdict(f_for_defaultdict)
+    cooc_dic = defaultdict(lambda : defaultdict(int))
     if expressions == []: return cooc_dic
     last_word_sid = 0
     for data, sentences in corpus_batcher(corpus_dir_path):
@@ -209,10 +133,9 @@ def expressions_cooccurrences(corpus_dir_path, expressions):
                         verbs[expression] = end_row[1]
     return cooc_dic
 
-# TODOC
-# TODO rename var
 # ORDER 1_1_5_1_2
-def dic_to_vec(x, voc, sums):
+# TODOC
+def dic_to_vec(expressions, voc, sums):
     """
     FR : \n
     EN : \n
@@ -228,7 +151,7 @@ def dic_to_vec(x, voc, sums):
     j = []
     left = dict(voc)
     #here
-    for n, (exp, cooc) in enumerate(x.items()):
+    for n, (exp, cooc) in enumerate(expressions.items()):
         for word, cooccurrences in cooc.items():
             if word in left : left.pop(word)
             j.append(voc[word])
@@ -255,9 +178,9 @@ class cached_expressions_cooccurrences:
         """
         Params
         ------
-            corpus_dir_path : str\n
-                FR : Emplacement du corpus\n
-                EN : The corpus path\n
+        corpus_dir_path : str\n
+            FR : Emplacement du corpus\n
+            EN : The corpus path\n
         """
         self.cache = {}
         self.corpus_dir_path = corpus_dir_path
@@ -270,13 +193,12 @@ class cached_expressions_cooccurrences:
         and the corpus' words\n
         Params
         ------
-            expressions : list<(str,str)>\n
-                FR : liste des expressions dont on veut les coccurrences\n
-                EN : list of the expressions of which we want the coccurrences\n
+        expressions : list<(str,str)>\n
+            FR : liste des expressions dont on veut les coccurrences\n
+            EN : list of the expressions of which we want the coccurrences\n
         Returns
         -------
-        dict<dict<int>>\n
-            {exp : {word1 : nb_cooc_exp_word2}}\n
+        exp_dic : dic{exp : (noun : str,verb : str) , cooc : dic{word : str , nb_cooc_exp_word : int}}\n
             FR : Dictionnaire contenant pour chaque expression les mots avec lequelles celle-ci
             cooccurre ainsi que le nombre de coccurences respective\n
             EN : Dictionary with, for each expression, the word cooccurring with said expression and
@@ -285,8 +207,7 @@ class cached_expressions_cooccurrences:
         --------
         expressions_cooccurrences
         """
-        # TODO rename
-        # TODO replace __call__
+        # TODO rename abunchastuff
         list_exp2 = [ex for ex in expressions if ex not in self.cache]
         e = expressions_cooccurrences(self.corpus_dir_path, list_exp2)
         for ex in list_exp2:
@@ -299,9 +220,9 @@ class cached_expressions_cooccurrences:
         EN : SAve the cache in a file.\n
         Params
         ------
-            name : str\n
-                FR : nom sous lequel on désire enregistrer le cache.\n
-                EN : name under which the cache is to be saved.\n
+        name : str\n
+            FR : nom sous lequel on désire enregistrer le cache.\n
+            EN : name under which the cache is to be saved.\n
         """
         with open(path.join(SAVE_DIR, name), 'wb') as file:
             pickle.dump(self.cache, file)
@@ -312,33 +233,40 @@ class cached_expressions_cooccurrences:
         EN : Load the cache from a file.\n
         Params
         ------
-            name : str\n
-                FR : nom sous lequel le cache est enregistré.\n
-                EN : name under which the cache is saved.\n
+        name : str\n
+            FR : nom sous lequel le cache est enregistré.\n
+            EN : name under which the cache is saved.\n
         """
         file_path = path.join(SAVE_DIR, name)
         if path.isfile(file_path) :
             with open(file_path, 'rb') as file:
                 self.cache = pickle.load(file)
 
-#TODOC
 class cached_expressions_vectors:
     """
     FR : Objet appelable (une fois initialisé, l'objet peut être appeler comme une fonction)
-    renvoitant la représentation vectoriel des coocurrences d'une liste d'expressions\n
+    renvoyant la représentation vectoriel des coocurrences d'une liste d'expressions\n
     EN : Callable object (once initialized, it can be called the same way a function does)
     returning the vectorial reprensation of the cooccurrences of the given list of expressions.\n
     """
-    #ORDER 1_1_4_4
+    #ORDER 1_1_4_4 
+    #TODOC
     def __init__(self, word_id, sums, svd, exps_cooc):
         """
         Params
         ------
-            word_id : dic[str, int]
-                FR :
-                EN :
-            sums : 
-
+        word_id : dic{str -> int}\n
+            FR : Dictionnaire des mots et leur id\n
+            EN : Dictionnary of the words and their id\n
+        sums : dic{str -> int}
+            FR : 
+            EN :
+        svd :
+            FR :
+            EN :
+        exps_cooc:
+            FR :
+            EN :
         """
         self.exps_cooc = exps_cooc
         self.cache = {}
@@ -346,9 +274,11 @@ class cached_expressions_vectors:
         self.sums = sums
         self.svd = svd
     # TODO rename abuchastuff
-    # TODO replace __call__
     #ORDER 1_1_5_1
+    #TODOC 
     def __call__(self, list_exp):
+        """
+        """
         e = self.exps_cooc(list_exp)
         list_exp2 = [ex for ex in list_exp if ex not in self.cache]
         a = dic_to_vec(e, self.word_id, self.sums)
@@ -357,23 +287,32 @@ class cached_expressions_vectors:
             self.cache[ex] = c
         return [self.cache[ex] for ex in list_exp]
     # ORDER 1_1_5_3_2
+    #TODOC
     def save_cache(self, name):
+        """
+        """
         with open(path.join(SAVE_DIR, name), 'wb') as file:
             pickle.dump(self.cache, file)
     # ORDER 1_1_5_0_2
+    #TODOC
     def load_cache(self, name):
+        """
+        """
         file_path = path.join(SAVE_DIR, name)
         if path.isfile(file_path) :
             with open(file_path, 'rb') as file:
                 self.cache = pickle.load(file)
               
-# TODOC 
-# TODO expressions
+
 # TODO change cache loading
-# TODO rename class
-class temp():
+class LSA():
+    """
+    """
     #ORDER 1_1_4
+    #TODOC
     def __init__(self, corpus_dir_path):
+        """
+        """
         self.id =encode(str.encode(corpus_dir_path), 'hex').decode()+'.pkl'
         cooc_dic = drive_cached(
             corpus_cooccurrences, 
@@ -391,35 +330,31 @@ class temp():
         self.exps_cooc = cached_expressions_cooccurrences(corpus_dir_path)
         self.exps = cached_expressions_vectors(self.word_id,self.sums,self.svd, self.exps_cooc)
     # ORDER 1_1_5_3
+    #TODOC
     def save_cache(self):
+        """
+        """
         print('cooc_cache'+self.id)
         self.exps_cooc.save_cache('cooc_cache'+self.id)
         self.exps.save_cache('vec_cache'+self.id)
     # ORDER 1_1_5_0
+    #TODOC
     def load_cache(self):
+        """
+        """
         print('cooc_cache'+self.id)
         self.exps_cooc.load_cache('cooc_cache'+self.id)
         self.exps.load_cache('vec_cache'+self.id)
-#TODO put in a func
-
-
-#TODO rename bunchashit
-#TODOC
-#ORDER 1_1_5
-def sshh(df, t):
-    expressions = [(v,n) for n,v in df.index.tolist()]
-    t.load_cache()
-    t.exps(expressions) #TODO too obscure
-    t.save_cache()
-    res = pd.DataFrame.from_dict(t.exps.cache, orient='index')
-    tmp = pd.DataFrame(res.reset_index()['index'].tolist(), index= res.index, columns=['VERB', 'NOUN'])
-    res = pd.merge(res, tmp, left_index=True, right_index=True).set_index(['NOUN', 'VERB'])
-    return res
-#pd.DataFrame(t.lsa, index= t.word_id).to_csv(path.join(SAVE_DIR, 'lsa.csv'), sep = '\t', quoting = csv.QUOTE_NONE, escapechar = ' ', encoding='utf-8')
-
-
-#t.exps.cache = tmp
-#t.save_cache()
-
-#print(pd.DataFrame({k : t.svd.transform(v) for k,v in t.exps.cache.items()}))
-    
+    #ORDER 1_1_5
+    #TODOC
+    def __call__(self, candidats):
+        """
+        """
+        expressions = [(v,n) for n,v in candidats.index.tolist()]
+        self.load_cache()
+        self.exps(expressions)
+        self.save_cache()
+        res = pd.DataFrame.from_dict(self.exps.cache, orient='index')
+        tmp = pd.DataFrame(res.reset_index()['index'].tolist(), index= res.index, columns=['VERB', 'NOUN'])
+        res = pd.merge(res, tmp, left_index=True, right_index=True).set_index(['NOUN', 'VERB'])
+        return res

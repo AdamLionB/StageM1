@@ -3,65 +3,69 @@ from collections import defaultdict
 import pandas as pd
 import numpy as np
 
-
-     
-
-# TODOC
-# TODO remove disk thing
 # ORDER 1_1_1_1
 # ORDER 1_2_1
-def find_candidats(corpus_dir_path):  
-    '''
-    find all couples (verb, noun) in the corpus where the verb points toward the noun.
-    Write the list of all those couples at the path given as output_path.
-    this file will contain duplicates
-    '''
-    nb_insertion = 0 #TODO manage insertion
-    
-    verbs = {}
-    nouns = {}
-    couples = {}
-
+def find_candidats(corpus_dir_path : str) -> (pd.DataFrame) : 
+    """
+    FR : Génère une DataFrame de tous les couples (nom, verbe) du corpus pour lesquelles le
+    verbs pointe sur le nom, et compte le nombre d'occurence de chaque candidats\n 
+    EN : Creates the DataFrame of all the (noun, verb) in the corpus where the verb points towards
+    the noun and count the number of occurences of each candidates.\n
+    Params
+    ------
+    corpus_dir_path :\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    Returns
+    -------
+    candidats : DataFrame[('NOUN', 'VERB') : (9,)]\n
+        FR : Tableau des candidats, toutes colonnes à 0 sauf, la première représentant le
+        nombre d'occurence du candidat\n
+        EN : Table of the candidats, all columns at 0 except the first describing the
+        number of occurences of the candidat.\n   
+    """ 
+    #ONEDAY manage insertion
+    candidates = {}
     for data, sentences in corpus_batcher(corpus_dir_path, batch_size= 100_000):
-        v = data.loc[data.UPosTag == 'VERB'] #select the line with verbs
-        n = data.loc[data.UPosTag == 'NOUN'] #select the line with nouns
+        verbs = data.loc[data.UPosTag == 'VERB'] #select the line with verbs
+        nouns = data.loc[data.UPosTag == 'NOUN'] #select the line with nouns
         #keeps the couples noun-verb where the noun point to the verb
-        candidats = (pd.merge(n, v, left_on=['SId', 'Head']
+        candidats = (pd.merge(nouns, verbs, left_on=['SId', 'Head']
                               , right_on=['SId', 'Id']
                               , suffixes=['_n', '_v']))[['Lemma_n', 'Lemma_v']]
-        
-        # add each candidat to a dict if they are not already in.
         # count the number of occurences
         for row in candidats.to_numpy():
-            nouns.setdefault(row[0], [0, 0, 0, 0])[0]+=1
-            verbs.setdefault(row[1], [0, 0, 0, 0])[0]+=1
-            couples.setdefault((row[0], row[1]), [0, 0, 0, 0, 0, 0, 0, 0, 0])[0]+=1
-    verbs = pd.DataFrame(data = verbs).transpose()
-    verbs.index.name = 'VERB'
-    verbs.set_axis(['N', 'P', 'T', 'supp'], axis = 1, inplace= True)
-
-    #generate the nouns dataframe        
-    nouns = pd.DataFrame(data = nouns).transpose()
-    nouns.index.name = 'NOUN'
-    nouns.set_axis(['N', 'P', 'T', 'supp'], axis = 1, inplace= True)
-
+            candidates.setdefault((row[0], row[1]), [0, 0, 0, 0, 0, 0, 0, 0, 0])[0]+=1
     #generate the candidates dataframe
-    couples = pd.DataFrame(data = couples).transpose()
-    couples.index.names = ['NOUN', 'VERB']
-    couples.set_axis(['N', 'P', 'T', 'supp', 'dist', 'P_obl', 'P_subj', 'P_obj', 'P_other'], axis = 1, inplace= True)
-    #print(couples['N'])
-    return verbs, nouns, couples
+    candidates = pd.DataFrame(data = candidates).transpose()
+    candidates.index.names = ['NOUN', 'VERB']
+    candidates.set_axis(['N', 'P', 'P_n', 'P_v', 'dist', 'P_obl', 'P_subj', 'P_obj', 'P_other'], axis = 1, inplace= True)
+    return candidates
     
-  
-
-# TODOC
 #ORDER 1_1_1_2
-def compute_features(corpus_dir_path, verbs, nouns, couples):
-    '''
-    Réalise plusieurs mesures sur les nom, verbe et couples (nom, verbe) du corpus
-    '''
-    print('computing measure')
-    size, n_v, n_n, n_s = (0, 0, 0, 0)
+def compute_features(corpus_dir_path: str, candidates: pd.DataFrame) -> pd.DataFrame:
+    """
+    FR : Calcul diverses mesures pour chacun des candidats en se basant sur le corpus\n
+    EN : Compute various features for each of the candidats by using the corpus \n
+    Params
+    ------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    couples : DataFrame[('NOUN', 'VERB') : (9,)]\n
+        FR : Tableau des candidats, toutes colonnes doivent être à 0,
+        sauf la première représentant le nombre d'occurence du candidat\n
+        EN : Table of the candidats, all columns should be at 0 
+        except the first describing the number of occurences of the candidat.\n
+    Returns
+    -------
+    features : DataFrame[('NOUN', 'VERB') : (15,)]\n
+        FR : Tableau des candidats, toutes les colonnes mise à jour\n
+        EN : Candidats table, all columns updated\n
+    See also
+    --------
+    find_candidats\n
+    """
     for data, sentences in corpus_batcher(corpus_dir_path, batch_size= 100_000):
         '''
         Les diverses comptes sont réalisés sur des batchs du corpus,
@@ -77,199 +81,142 @@ def compute_features(corpus_dir_path, verbs, nouns, couples):
                      , right_on=['SId', 'Id']
                      , suffixes = ['_n', '_v']).set_index('SId')
 
-        # Compte le nombre de phrases, de verbe, de nom, et de couple (non unique)
-        size += len(sentences)
-        n_v += len(v)
-        n_n += len(n)
-        n_s += len(s)
-
-
-        #### Patterne mining ####
-        # Premier exemple détaillé pour mieux comprendre la syntaxe pandas
-
-        # Pour chaque couple nom, verbe ; compte le nombre de phrase dans lesquelles on retouve au moins une fois le nom ET le verbe (lié ou non)
-        t = (s[['Lemma_n', 'Lemma_v']]                      # isole les colonnes 'Lemma_n' et 'Lemma_v' dans une df (avec 'Sid' et 'Id' car ce sont des indexes)
-             .assign(T=1)                                   # ajoute une colonne T remplie 1 à la df
-             .groupby(['SId', 'Lemma_n', 'Lemma_v'])        # groupe par phrase, nom, verbe 
-             .min()                                         # met chaque groupe T à 1
-             .groupby(['Lemma_n', 'Lemma_v'])               # groupe par nom, verbe
-             .count())                                      # compte le nombre de phrase aggregé à chaque groupe.
-        add_to_col(couples, t, 'T')                         # ajoute le résultat précédent à la df couples
-        # Pour chaque verbe ; compte le nombre de phrases dans lesquelles on retrouve au moins une fois le verbe
-        t = v[['Lemma']].assign(T=1).groupby(['SId', 'Lemma']).min().groupby('Lemma').count()
-        add_to_col(verbs, t, 'T')
-        # Pour chaque nom ; compte le nombre de phrases dans lesquelles on retrouve au moins une fois le nom
-        t = n[['Lemma']].assign(T=1).groupby(['SId', 'Lemma']).min().groupby('Lemma').count()
-        add_to_col(nouns, t, 'T')
-
-
         #### Distance nom, verbe ####
         
         # Pour chaque couple (nom, verbe) unique; fait la somme des distance (nombre de mots) entre le nom est le verbe des instances de (nom, verbe)
         t = s.assign(dist=np.abs(pd.to_numeric(s.Id_n) - pd.to_numeric(s.Id_v))).groupby(['Lemma_n', 'Lemma_v']).sum()
-        add_to_col(couples, t, 'dist')
-
+        add_to_col(candidates, t, 'dist')
 
         #### Fréquence relation ####
 
         # Pour chaque couple (nom, verbe) ; compte le nombre de fois où le couple est lié par une relation de type
         # obj, obl ou subj
         t = s[['DepRel_n', 'Lemma_n', 'Lemma_v']].assign(N_rel=0).groupby(['DepRel_n', 'Lemma_n', 'Lemma_v']).count()
-        #print(t)
-        add_to_col(couples, t.loc[('obj')], 'P_obj')
-        add_to_col(couples, t.loc[('obl')], 'P_obl')
-        add_to_col(couples, t.loc[('nsubj')], 'P_subj')
-
-
-    #### Probabilitées ####
-
-    # Pour chaque couple nom, verbe ; calcule la probabilité qu'un couple nom, verbe quelconque soit le couple nom, verbe en question lié [p(n et v)]
-    couples.update(pd.DataFrame({'P' : couples['N'] / n_s}))   
-    # Pour chaque verbe ; calcule la probabilité qu'un verbe quelconque soit le verbe en question lié à un nom quelconque [p(v)]
-    verbs.update(pd.DataFrame({'P' : verbs['N'] / n_s}))
-    # Pour chaque nom ; calcule la probabilité qu'un nom quelconque soit le nom en question lié à un verbe quelconque [p(n)]
-    nouns.update(pd.DataFrame({'P' : nouns['N'] / n_s}))
-
-
-    #### Patterne mining ####
-    
-    # Pour chaque verbe ; calcule la probabilité qu'une phrase quelconque contienne le verbe [supp(v)]
-    verbs.update(pd.DataFrame({'supp' : verbs['T'] / size}))
-    # Pour chaque nom ; calcule la probabilité qu'une phrase quelconque contienne le nom [supp(n)]
-    nouns.update(pd.DataFrame({'supp' : nouns['T'] / size}))
-
+        add_to_col(candidates, t.loc[('obj')], 'P_obj')
+        add_to_col(candidates, t.loc[('obl')], 'P_obl')
+        add_to_col(candidates, t.loc[('nsubj')], 'P_subj')
 
     #### Distance nom, verbe ####
     
     # Pour chaque couple (nom, verbe) ; calcule la distanc moyenne entre le nom et le verbe
-    couples.update(pd.DataFrame({'dist' : couples['dist'] / couples['N']}))
-
-
-    #### Mise en commun ####
-
-    #fusionne les mesures relatives aux noms et au verbes aux mesure de couples (star schéma to 
-    nouns.rename(columns=lambda x: str(x) + '_n', inplace = True)
-    couples = pd.merge(couples.reset_index(), nouns, on='NOUN')
-    nouns = None
-    verbs.rename(columns=lambda x: str(x) + '_v', inplace = True)
-    couples = pd.merge(couples.reset_index(), verbs, on='VERB')
-    verbs = None
-    couples.set_index(['NOUN', 'VERB'], inplace = True)
-
-
+    
+    candidates.update(pd.DataFrame({'dist' : candidates['dist'] / candidates['N']}))
+    
     #### Probablitées ####
+    candidates.update(pd.DataFrame({'P' : candidates['N'] / candidates['N'].sum()}))
     
+    candidates.update(
+        pd.merge(
+            candidates,
+            pd.DataFrame({'P_n' : candidates['N'].groupby('NOUN').sum() / candidates['N'].sum()}),
+            left_on = 'NOUN',
+            right_index = True,
+            suffixes=['a','']
+        )['P_n'])
+    
+    candidates.update(
+        pd.merge(
+            candidates,
+            pd.DataFrame({'P_v' : candidates['N'].groupby('VERB').sum() / candidates['N'].sum()}),
+            left_on = 'VERB',
+            right_index = True,
+            suffixes=['a','']
+        )['P_v'])
+
+
     # Pour chaque couple nom, verbe ; calcule la probabilité qu'un nom quelconque soit le nom en question sachant le verbe
-    couples = couples.assign(P_n_given_v = couples['P'] / couples['P_v'])
+    candidates = candidates.assign(P_n_given_v = candidates['P'] / candidates['P_v'])
     # Pour chaque couple nom, verbe ; calcule la probabilité qu'un verbe quelconque soit le verbe en question sachant le nom
-    couples = couples.assign(P_v_given_n = couples['P'] / couples['P_n'])
+    candidates = candidates.assign(P_v_given_n = candidates['P'] / candidates['P_n'])
     # Pour chaque nom ; calcule la variance de la probabilité du nom
-    couples = couples.assign(V_n = couples['P_n'] * (1 - couples['P_n']))
+    candidates = candidates.assign(V_n = candidates['P_n'] * (1 - candidates['P_n']))
     # Pour chaque verbe ; calcule la variance de la probabilité du verbe
-    couples = couples.assign(V_v = couples['P_v'] * (1 - couples['P_v']))
+    candidates = candidates.assign(V_v = candidates['P_v'] * (1 - candidates['P_v']))
     # Pour chaque couple (nom, verbe) ; calcule la covariance de la probabilité du nom et la probabilité du verbe
-    couples = couples.assign(V = couples['P'] - (couples['P_n'] * couples['P_v']))
+    candidates = candidates.assign(V = candidates['P'] - (candidates['P_n'] * candidates['P_v']))
     # Pour chaque cuple (nom, verbe) ; calcule la corrélation entre la probabilité du nom et la probabilité du verbe
-    couples = couples.assign(corr = couples['V'] / (np.sqrt(couples['V_n']) * np.sqrt(couples['V_v'])))
+    candidates = candidates.assign(corr = candidates['V'] / (np.sqrt(candidates['V_n']) * np.sqrt(candidates['V_v'])))
     # Pour chaque couple nom, verbe ; calcule le pmi
-    couples = couples.assign(pmi = np.log(couples['P_n_given_v'] / couples['P_n']))
-
-
-    #### Patterne mining ####
-    
-    # Pour chaque couple nom, verbe ; calcule la probabilité qu'une phrase quelconque contienne le nom ET le verbe (lié ou non) [supp(x -> y) || supp(y -> x)]
-    couples.update(pd.DataFrame({'supp' : couples['T'] / size}))
-    # Pour chaque couple nom, verbe ; calcule la probabilité qu'une phrase contenant le nom contienne aussi le verbe (lié ou non) [conf(x -> y)]
-    couples = couples.assign(conf_n_v = couples['supp'] / couples['supp_n'])
-    # Pour chaque couple nom, verbe ; calcule la probabilité qu'une phrase contenant le verbe contienne aussi le nom (lié ou non) [conf(y -> x)]
-    couples = couples.assign(conf_v_n = couples['supp'] / couples['supp_v'])
-
+    candidates = candidates.assign(pmi = np.log(candidates['P_n_given_v'] / candidates['P_n']))
 
     #### Fréquence relation ####
     
     #Pour chaque couple nom, verbe ; calcule la fréquence à laquelle le nom est objet du verbe
-    #print(couples[['P_obj', 'N']].sort_values('N'))
-    couples.update(pd.DataFrame({'P_obj' : couples['P_obj'] / couples['N']}))
+    candidates.update(pd.DataFrame({'P_obj' : candidates['P_obj'] / candidates['N']}))
     #Pour chaque couple nom, verbe ; calcule la fréquence à laquelle le nom est oblique du verbe
-    couples.update(pd.DataFrame({'P_obl' : couples['P_obl'] / couples['N']}))
+    candidates.update(pd.DataFrame({'P_obl' : candidates['P_obl'] / candidates['N']}))
     #Pour chaque couple nom, verbe ; calcule la fréquence à laquelle le nom est sujet du verbe
-    couples.update(pd.DataFrame({'P_subj' : couples['P_subj'] / couples['N']}))
+    candidates.update(pd.DataFrame({'P_subj' : candidates['P_subj'] / candidates['N']}))
     #Pour chaque couple nom, verbe ; calcule la fréquence à laquelle le nom n'est, ni objet, oblique ou sujet du verbe
-    couples.update(pd.DataFrame({'P_other' : 1 - (couples['P_obj'] + couples['P_obl'] + couples['P_subj'])}))
+    candidates.update(pd.DataFrame({'P_other' : 1 - (candidates['P_obj'] + candidates['P_obl'] + candidates['P_subj'])}))
     
-    return couples.fillna(0)
+    candidates = candidates.drop(['N'], axis=1)
+    return candidates.fillna(0)
 
-
-##### PATRON #######
-# TODOC
 #ORDER 1_1_2_1
-#ORDER 1_1_3_1
-def compute_patrons(corpus_dir_path):
+def find_all_patterns(corpus_dir_path : str) -> list:
     """
-    FR :
-
-    EN :
+    FR : Trouve tout les patrons syntaxique du corpus \n
+    EN : Find all the syntaxical patterns of the corpus\n
+    Params
+    ------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+            EN : The corpus path\n
     Returns
     -------
-    ??
-        FR :
-
-        EN :
+    all_patterns : list[(Sid : int, (word1 :str, word2 :str, pattern : list[pos : str,]))]\n
+        FR : Liste des patrons syntaxique avec l'id de leur phrase
+        et du mot avant et après le patron\n
+        EN : Liste of the syntaxical pattern with th id ofthe sentence
+        and the word before and after the pattern \n
     """
     d = {}
     for data, sentences in corpus_batcher(corpus_dir_path):
         verbes = data.loc[data.UPosTag == 'VERB'] 
         nouns = data.loc[data.UPosTag == 'NOUN']
-        couples = pd.merge(nouns.reset_index(), verbes.reset_index()
+        candidates = pd.merge(nouns.reset_index(), verbes.reset_index()
                      , left_on=['SId', 'Head']
                      , right_on=['SId', 'Id']
                      , suffixes = ['_n', '_v']).set_index('SId')
-        all_patrons = []
+        all_patterns = []
         temp = []
-        current_sid = -1
-        gen = couples_per_sentences(couples)
+        sentence_sid = -1
+        gen = couples_per_sentences(candidates)
         for (Sid, Id), pos in data['UPosTag'].iteritems():
             try :
-                while(current_sid < Sid):
-                    current_sid, j = next(gen)
-                    all_patrons.append((current_sid,j))
+                while(sentence_sid < Sid):
+                    sentence_sid, sentence_couples = next(gen)
+                    all_patterns.append((sentence_sid, sentence_couples))
                     #print(si, Sid)
-                for jj in j:
-                    if int(Id) > jj[0] and int(Id) < jj[1]:
-                        jj[2].append(pos)
+                for curr_couple in sentence_couples:
+                    if int(Id) > curr_couple[0] and int(Id) < curr_couple[1]:
+                        curr_couple[2].append(pos)
             except :
-                pass
-            
-            
-        return all_patrons
+                pass 
+        return all_patterns
 
-
-
-# TODOC     
-# ORDER 1_1_2_1_1 
-# ORDER 1_1_3_1_1         
+# ORDER 1_1_2_1_1
 def couples_per_sentences(couples):
     """
-    FR : Génère pour chaque phrase une liste des couples (nom,verbe) trié par ordre d'apparition du premier
-    element du couple
-
-    EN :
+    FR : Génère pour chaque phrase une liste des couples (nom,verbe) ou (verbe,nom) 
+    trié par ordre d'apparition de l'element du couple apparraisant le premier\n
+    EN : Yield for each sentence a list of the couples (noun,verb) or (verb, noun) ordered
+    by apparition order of the first element of the couple to appear\n
     Parameters
     ----------
-    couples : Dataframe
-        FR : Ensemble des couples (nom,verbe) -unique- du corpus
-
-        EN : 
+    couples : Dataframe\n
+        FR : Tableau des couples (nom,verbe) -unique- du corpus\n
+        EN : Table of the -unique- couples (noun,verb) of the corpus\n
     Yields
     ------
-    int : 
-        FR : identifiant de la phrase
-
-        EN :
-    list[(str,str,list)] :
-        FR : 
-
-        EN :
+    Sid : int
+        FR : identifiant de la phrase\n
+        EN : Sentence id\n
+    patterns : list[(word1 : str, word2 :str, [])]\n
+        FR : Identifiant des mots avant et après le patron
+        ainsi qu'une liste vide pour y mettre le patron\n
+        EN : Ids of the words before and after the pattern, and an empty list to put the pattern\n
     """
     old = couples.iloc[0].name
     temp = []
@@ -284,64 +231,79 @@ def couples_per_sentences(couples):
             temp.append((min(idn,idv), max(idn,idv), [],))
     yield old, sorted(temp, key= lambda x : int(x[0]))
 
-# TODOC
 # ORDER 1_1_2_2
-def get_most_frequent_patrons(all_patrons):
-    d = defaultdict(int)
-    for i in all_patrons:
-        for j in i[1]:
-            d[tuple(j[2])]+=1
-    return [a[0] for a in sorted([(k,v) for k,v in d.items()], key = lambda x: x[1], reverse=True)[:20]]
+def get_most_frequent_patterns(all_patterns : list)-> list:
+    """
+    FR : Réduit la liste des patrons aux 20 patrons les plus fréquent 
+    et retire les identifiants.
+    EN : Filter the list of patterns to the 20 most frequent patterns\n
+    and remove the ids.\n
+    Params
+    ------
+    all_patterns : list[(Sid : int, (word1 :str, word2 :str, pattern : list[pos : str,]))]\n
+        FR : Liste des patrons syntaxique avec l'id de leur phrase
+        et du mot avant et après le patron\n
+        EN : Liste of the syntaxical pattern with th id ofthe sentence
+        and the word before and after the pattern \n
+    Returns
+    -------
+    frequent_pattern : list[pattern : list[pos : str]]\n
+        FR : liste des 20 patrons les plus fréquent\n
+        EN : list of the 20 most frequent pattern\n
+    """
+    dic = defaultdict(int)
+    for _,i in all_patterns:
+        for _,_,pattern in i:
+            dic[tuple(pattern)]+=1
+    return [a[0] for a in sorted([(k,v) for k,v in dic.items()], key = lambda x: x[1], reverse=True)[:20]]
 
-# TODOC
-# TODO rename
-#ORDER 1_1_3_1
-def p(corpus_dir_path, a, b):
-    e = defaultdict(lambda : defaultdict(int))
+#ORDER 1_1_2
+def get_candidats_pattern_frequency(corpus_dir_path :str) -> pd.DataFrame:
+    """
+    FR : Calcule pour chaque candidat du corpus la fréquence des patrons fréquent\n
+    EN : Compute for each candidat of the corpus the frequency of the frequent patterns\n
+    Params
+    ------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    Returns
+    -------
+    frequent_pattern_frequency : DataFrame\n
+        FR : Tableau des candidats et leur fréquence associer à chaque patron fréquent\n
+        EN : Table of the candidats and their associated frequence to each frequent pattern.\n
+    """
+    all_patterns = find_all_patterns(corpus_dir_path)
+    frequent_patterns = get_most_frequent_patterns(all_patterns)
+    dic = defaultdict(lambda : defaultdict(int))
     n = 0
     for data, sentences in corpus_batcher(corpus_dir_path):
         last = data.iloc[-1].name[0]
-        for i, j in a[n:]:
-            if i > last:
+        for Sid, patterns in all_patterns[n:]:
+            if Sid > last:
                 break
-            for k, l, m in j:
-                if tuple(m) in b:
-                    # TODO why try ?
-                    try:
-                        a1 = data.loc[(i,str(k))]['Lemma']
-                        a2 = data.loc[(i,str(l))]['Lemma']
-                        if data.loc[(i,str(k))]['UPosTag'] == 'NOUN':
-                            a1, a2 = a2, a1
-                        e[(a1, a2)][tuple(m)] +=1
-                    except:
-                        print('-------',i,k,l,m)
+            #ONEDAY should add a pattern "other" frequence would be more accurate from it
+            for id_w1, id_w2, pattern in patterns:
+                if tuple(pattern) in frequent_patterns:
+                    lemma_w1 = data.loc[(Sid,str(id_w1))]['Lemma']
+                    lemma_w2 = data.loc[(Sid,str(id_w2))]['Lemma']
+                    if data.loc[(Sid,str(id_w1))]['UPosTag'] == 'VERB':
+                        dic[(lemma_w2, lemma_w1)][tuple(pattern)] +=1
+                    else :
+                        dic[(lemma_w1, lemma_w2)][tuple(pattern)] +=1
             n+=1
-    res = pd.DataFrame.from_dict(e, orient='index').fillna(0)
-    res.columns = b
-    res.index.names = ('VERB', 'NOUN')
+    res = pd.DataFrame.from_dict(dic, orient='index').fillna(0)
+    res.columns = frequent_patterns
+    res.index.names = ('NOUN', 'VERB')
+    res = res.div(res.sum(axis=1), axis=0)
     return res
 
-
-
-
-
-
-# TODO RENAME
-# TODOC
-class patronateur():
-    #ORDER 1_1_2
-    def fit(self, corpus_dir_path):
-        all_patrons = compute_patrons(corpus_dir_path)
-        self.patrons = get_most_frequent_patrons(all_patrons)
-    #ORDER 1_1_3
-    def to_rename(self, corpus_dir_path):
-        all_patrons = compute_patrons(corpus_dir_path)
-        return p(corpus_dir_path, all_patrons, self.patrons)
-
-
-# TODOC
 #ORDER 1_1_1_2_1
-def add_to_col(df_to_update, to_add, col_to_update_name):
+def add_to_col(df_to_update : pd.DataFrame, to_add : pd.Series, col_to_update_name):
+    """
+    FR : Ajoute les valeurs de to_add à la colonne col_to_update_name de la DataFrae df_to_update.
+    EN : Add the values of to_add to the col_to_update_name column of the df_to_update DataFrame
+    """
     df_to_update.update(
         pd.DataFrame({col_to_update_name :
              pd.concat(
@@ -353,26 +315,24 @@ def add_to_col(df_to_update, to_add, col_to_update_name):
             })
         )
 
-
-# TODOC
 # ORDER 1_1_1
 def get_features(corpus_dir_path : str) -> pd.DataFrame:
     """
-        FR : \n
-        EN :\n
-        Params
-        ------
-            corpus : DataFrame\n
-                FR :\n
-                EN :\n
-        Returns
-        -------
-            features : DataFrame\n
-                FR :\n
-                EN :\n
+    FR : Trouve tout les candidats du corpus, puis calcul leurs mesures\n
+    EN : Find all candidats of the corpus then compute their features\n
+    Params
+    ------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    Returns
+    -------
+    features : DataFrame\n
+        FR : Tableau des candidats et de leurs mesures\n
+        EN : Table of the candidats and their features\n
     """
-    v, n, c = find_candidats(corpus_dir_path)
-    features = compute_features(corpus_dir_path, v,n,c)
+    c = find_candidats(corpus_dir_path)
+    features = compute_features(corpus_dir_path, c)
     return features
 
 

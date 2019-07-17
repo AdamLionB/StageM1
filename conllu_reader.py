@@ -8,14 +8,14 @@ prefix_len = len('# text = ')
 
 
 #TODOC 
-def file_batcher(file, batch_size):
+def file_batcher(file : 'Iterator'  , batch_size : int):
     """
-    FR : Format le contenue du fichier CoNLL en une Dataframes contenants chacune au maxium
-    'batch_size' phrases
+    FR : Format le contenue du fichier CoNLL en  Dataframes contenants chacune au maxium
+    'batch_size' phrases, 
     EN : 
     Params
     ------
-        file : str
+        file : file
             FR :
             EN :
         batch_size : int
@@ -27,6 +27,9 @@ def file_batcher(file, batch_size):
         FR : 
         EN :
     list[str] :
+        FR :
+        EN :
+    file : str
 
     """
     '''
@@ -85,30 +88,32 @@ def file_batcher(file, batch_size):
         frame.set_index(['SId', 'Id'], inplace = True)
         yield frame, sentences, file
 
-#TODOC
-def corpus_batcher(corpus_dir_path, batch_size= 10_000):
+def corpus_batcher(corpus_dir_path : str, batch_size : int = 10_000):
     """
-    FR : Parcour le corpus par lots de batch_size phrases, les phrases
+    FR : Parcour le corpus par lots de batch_size phrases
+    EN : Parkour the corpus per batch of batch_size sentences
     Params
     ------
-        corpus_dir_path : str
-            FR :
-            EN :
-        batch_size : int default 100
-            FR :
-            EN : 
+        corpus_dir_path : str\n
+            FR : Emplacement du corpus\n
+            EN : The corpus path\n
+        batch_size : int default 10_000\n
+            FR : Nombre de phrase à lire par lot\n
+            EN : Number of sentence to be read per batch\n
     Yields
     ------
-        DataFrame :
-            FR :
-            EN :
-        list[str] :
-            FR :
-            EN :
+        data : DataFrame[('Sid', 'Id'), ...]
+            FR : Tableau de tout les token du lot
+            EN : Table of all the token in the batch
+        sentences : list[str]
+            FR : Liste des phrase du lot
+            EN : List of the sentences of the batch
     Examples
     --------
-    >>> for dataFrame, sentences in corpus_batcher('path'):
-    >>>     ...
+    >>> buffer = []
+    >>> for data, sentences in corpus_batcher('path'):
+    >>>     buffer += do_something(data)
+    >>> aggregate(buffer)
     """
     for path in os.listdir(corpus_dir_path):
         file = open(corpus_dir_path+'\\'+path, encoding='utf-8')
