@@ -1,0 +1,1238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.6.3" />
+<title>pred API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase;cursor:pointer}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>pred</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">import pandas as pd
+import measurer
+from codecs import encode
+import utilities
+from lsa import LSA
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import cohen_kappa_score, recall_score, f1_score, precision_score, precision_recall_curve
+import seaborn as sns
+import matplotlib.pyplot as plt
+import sys
+import re
+import argparse
+import cupter
+
+
+
+
+TRAIN_DIR = &#39;Train&#39;
+TEST_DIR = &#39;Test&#39;
+CORPUS_DIR = &#39;Corpus&#39;
+TEMP_DIR = &#39;temp&#39;
+SAVE_DIR = utilities.SAVE_DIR()
+DEV_DIR = &#34;Dev&#34;
+
+
+#TODOC
+def fetch_regular_features(corpus_dir_path : str, reset=False ) -&gt; (
+        pd.DataFrame, pd.DataFrame, pd.DataFrame):
+        &#34;&#34;&#34;
+        FR : Récupère les mesures standards tel que les probabilités, distances, patron syntaxique
+        pour chaque candidat du corpus\n
+        EN : Fetch regular features such as probabilities, distances, syntaxical pattern for
+        each candidat of the given corpus \n
+        Params
+        ------
+        corpus_dir_path : str\n
+                FR : Emplacement du corpus\n
+                EN : The corpus path\n
+        reset : bool\n
+                #TODOC
+        Returns
+        -------
+        features : DataFrame\n
+                FR : Tableau des candidats et de leur mesures.\n
+                EN : Table of the candidats and their features.\n
+        lsa_noun : DataFrame\n
+                FR : Tableau des candidats et du vecteur de leur nom\n
+                EN : Table of the candidats and their noun vector\n
+        lsa_verb : DataFrame\n
+                FR : Tableau des candidats et du vecteur de leur verbe\n
+                EN : Table of the candidats and their verb vector\n
+        exps_lsa : DataFrae\n
+                #TODO
+        &#34;&#34;&#34;
+        corpus_id = encode(str.encode(corpus_dir_path), &#39;hex&#39;).decode()+&#39;.pkl&#39;
+        
+        get_features = utilities.drive_cached_func(measurer.get_features, &#39;features&#39;+corpus_id, reset)
+        features = get_features(corpus_dir_path)
+
+        get_pattern_frequency = utilities.drive_cached_func(
+                measurer.get_candidats_pattern_frequency, &#39;patterns&#39;+corpus_id, reset)
+        patterns = get_pattern_frequency(corpus_dir_path)
+        features = pd.merge(features, patterns, how = &#39;left&#39;, left_index=True, right_index=True).fillna(0)
+        
+        tmp = LSA(corpus_dir_path)
+        lsa = pd.DataFrame(tmp.lsa, index= tmp.word_id)
+        lsa.columns.name = &#39;WORD&#39;
+
+        exps_lsa = utilities.drive_cached_func(tmp,&#39;exps&#39;+corpus_id, reset)(features)
+
+        lsa_noun = pd.merge(features, lsa, how=&#39;left&#39;, left_on=&#39;NOUN&#39;, right_index=True).iloc[:,-100:].fillna(0)
+        lsa_verb = pd.merge(features, lsa, how=&#39;left&#39;, left_on=&#39;VERB&#39;, right_index=True).iloc[:,-100:].fillna(0)
+        len_v = pd.DataFrame(lsa_verb.abs().sum(axis=1))
+        len_v.columns = [&#39;len_v&#39;]
+        len_n = pd.DataFrame(lsa_noun.abs().sum(axis=1))
+        len_n.columns = [&#39;len_n&#39;]
+        
+        features = pd.merge(features, len_v, left_index=True, right_index=True)
+        features = pd.merge(features, len_n, left_index=True, right_index=True)
+        dist_noun = pd.DataFrame(utilities.cos_similarities(
+                exps_lsa.loc(axis=0)[lsa_noun.index].fillna(0).sort_index().values,
+                lsa_noun.sort_index().values
+        ), index=lsa_noun.sort_index().index)
+
+        dist_noun.columns = [&#39;dist_noun&#39;]
+        features = pd.merge(features, dist_noun, left_index=True, right_index=True)
+        # TODO replace loc with reindex
+        dist_verb = pd.DataFrame(utilities.cos_similarities(
+                exps_lsa.loc(axis=0)[lsa_verb.index].fillna(0).sort_index().values,
+                lsa_verb.sort_index().values
+        ), index=lsa_verb.sort_index().index)
+
+        dist_verb.columns = [&#39;dist_verb&#39;]
+        features = pd.merge(features, dist_verb, left_index=True, right_index=True)
+        
+        features = features.assign(
+                        dist_relative= features[&#39;dist_noun&#39;] / (features[&#39;dist_noun&#39;] + features[&#39;dist_verb&#39;])
+                ).fillna(0.5)
+        return features, lsa_noun, lsa_verb, exps_lsa
+
+
+#TODOC
+def fetch_predictable_candidates(corpus_dir_path : str, features : pd.DataFrame):
+        return features.reindex(measurer.find_candidats(corpus_dir_path).index).dropna()
+        
+
+def fetch_annotated_candidates(annotated_corpus_dir_path :str, features : pd.DataFrame
+        ) -&gt; (pd.DataFrame, pd.DataFrame):
+        &#34;&#34;&#34;
+        FR : Recupère parmis les candidats ceux qui apparraisent dans corpus annoté\n
+        EN : Fetch from the candidats those which appear in the annotated corpus\n
+        Params
+        ------
+        annotated_corpus_dir_path : str\n
+                FR : Emplacement du corpus annoté\n
+                EN : The annotated corpus path\n
+        features : str\n
+                FR : Tableau des candidats et leurs mesures\n
+                EN : Table of the candidtas and their features\n
+        Returns
+        -------
+        X : DataFrame\n
+                FR : Tableau des candidats restant et leur mesure\n
+                EN : Table of the selected candidats and their features\n
+        y : DataFrame\n
+                FR : Tableau des candidats restant et leur annotation\n
+                EN : Table of the selected candidats and their annotation\n
+        &#34;&#34;&#34;
+        predictable_candidates = fetch_predictable_candidates(annotated_corpus_dir_path, features)
+
+        truth = cupter.get_LVCs(annotated_corpus_dir_path).assign(isLVC=&#39;YES&#39;)
+        features = pd.merge(predictable_candidates, truth, how=&#39;left&#39;, left_index= True, right_index= True).fillna(&#39;NO&#39;)
+        y = features[[&#39;isLVC&#39;]]
+        X = features.drop([&#39;isLVC&#39;], axis=1)
+        return X,y
+
+
+
+#TODO Find a better name
+class custom_classifier():
+        def __init__(self, lsa_noun : pd.DataFrame, lsa_verb : pd.DataFrame, exps_lsa : pd.DataFrame):
+                &#34;&#34;&#34;
+                Params
+                ------
+                lsa_noun : DataFrame\n
+                        FR : Tableau des candidats et du vecteur de leur nom\n
+                        EN : Table of the candidats and their noun vector\n
+                lsa_verb : DataFrame\n
+                        FR : Tableau des candidats et du vecteur de leur verbe\n
+                        EN : Table of the candidats and their verb vector\n
+                exps_lsa : DataFrame\n
+                        #TODOC
+                &#34;&#34;&#34;
+                self.lsa_noun = lsa_noun
+                self.lsa_verb = lsa_verb
+                self.exps_lsa = exps_lsa
+        def fit(self, X : pd.DataFrame, y : pd.DataFrame):
+                &#34;&#34;&#34;
+                FR : Entraine le modèle de prédiction\n
+                EN : Fit the prediction model\n
+                Params
+                ------
+                X : DataFrame\n
+                        FR : Tableau des candidats et leurs features\n
+                        EN : Table of the candidats and their features\n
+                y : DataFrame\n
+                        FR : Tableau des candidats et leur annotation\n
+                        EN : Table of the candidats and their annotation\n
+                &#34;&#34;&#34;
+                vecs = self.lsa_noun
+                vecs = pd.merge(vecs, y , left_index= True, right_index= True)[lambda x: x.isLVC==&#39;YES&#39;]
+                self.noun_vec = vecs.mean(axis=0).to_frame().transpose()
+                vecs = self.lsa_verb
+                vecs = pd.merge(vecs, y , left_index= True, right_index= True)[lambda x: x.isLVC==&#39;YES&#39;]
+                self.verb_vec = vecs.mean(axis=0).to_frame().transpose()
+                vecs = self.lsa_verb
+                vecs = pd.merge(vecs, y , left_index= True, right_index= True)[lambda x: x.isLVC==&#39;YES&#39;]
+                self.exps_vec = vecs.mean(axis=0).to_frame().transpose()
+                
+                X_tmp = self.compute_average_vector_features(X)
+                
+
+                self.classifier = GradientBoostingClassifier(n_estimators=500,
+                learning_rate=0.15, min_samples_split=3, max_leaf_nodes=15
+                , loss=&#39;exponential&#39;)
+
+                #shuffle
+                shufling = pd.merge(X_tmp, y, left_index=True, right_index=True)
+                shufling.sample(frac=1)
+                y_tmp = shufling[[&#39;isLVC&#39;]]
+                X_tmp = shufling.drop([&#39;isLVC&#39;], 1)
+
+                self.classifier.fit(X_tmp, y_tmp[&#39;isLVC&#39;])
+                return self
+        def compute_average_vector_features(self, X : pd.DataFrame) -&gt; pd.DataFrame:
+                &#34;&#34;&#34;
+                FR : Calcul pour chaque candidats des mesures en rapport à la distance entre les
+                vecteurs du candidats et le vecteur moyen des candidats positif\n
+                EN : Compute for each candidats features regarding the distance between the vector of the
+                candidats and the average vector of postitive candidats\n
+                Params
+                ------
+                X : DataFrame\n
+                        FR : Tableau des candidats et leurs features\n
+                        EN : Table of the candidats and their features\n
+                Returns
+                -------
+                new_X : DataFrame\n
+                        FR : Tableau X auquel on a ajouté quelques mesures\n
+                        EN : Table X with a few more features\n
+                &#34;&#34;&#34;
+                tmp = pd.DataFrame(
+                cosine_similarity(
+                                self.noun_vec
+                                , self.lsa_noun.fillna(0)
+                )[0], index=self.lsa_noun.index)
+                tmp.columns= [&#39;noun&#39;]
+                X_tmp = pd.merge(X, tmp, left_index=True, right_index=True)
+
+                tmp = pd.DataFrame(
+                cosine_similarity(
+                                self.verb_vec
+                                , self.lsa_verb.fillna(0)
+                )[0], index=self.lsa_verb.index)
+                tmp.columns= [&#39;verb&#39;]
+                X_tmp = pd.merge(X_tmp, tmp, left_index=True, right_index=True)
+
+                tmp = pd.DataFrame(
+                cosine_similarity(
+                                self.exps_vec
+                                , self.exps_lsa.fillna(0)
+                )[0], index=self.exps_lsa.index)
+                tmp.columns= [&#39;exp&#39;]
+                X_tmp = pd.merge(X_tmp, tmp, left_index=True, right_index=True)
+                return X_tmp
+        def predict(self, X : pd.DataFrame) -&gt; pd.DataFrame:
+                &#34;&#34;&#34;
+                FR : Prédit la classe des candidats fournie en X\n
+                EN : Predict X&#39;s candidats&#39; classe\n
+                Params
+                ------
+                X : DataFrame\n
+                        FR : Tableau des candidats et leurs features\n
+                        EN : Table of the candidats and their features\n
+                Returns
+                -------
+                y_predicted : DataFrame\n
+                        FR : Tableau des candidats et leur classe prédite\n
+                        EN : Table of the candidats and their predicted class\n
+                &#34;&#34;&#34;
+                X = self.compute_average_vector_features(X)
+                return pd.DataFrame(self.classifier.predict(X), index=X.index)
+        def predict_proba(self, X):
+                #TODOC
+                X = self.compute_average_vector_features(X)
+                return pd.DataFrame(self.classifier.predict_proba(X), index=X.index, columns=self.classifier.classes_)
+
+class Manager():
+        #TODOC
+        def set_dir(self, corpus_dir, train_dir, test_dir, save_dir):
+                self.CORPUS_DIR = corpus_dir
+                self.TRAIN_DIR = train_dir
+                self.TEST_DIR = test_dir
+                self.SAVE_DIR = save_dir
+                utilities.SAVE_DIR.set(save_dir)
+        def train(self, reset_features = False, reset_classifier= False):
+                self.compute_features(reset_features)
+                self.fit(reset_classifier)
+        def compute_features(self, reset = False):
+                self.features, self.lsa_noun, self.lsa_verb, self.exps_lsa = fetch_regular_features(
+                        self.CORPUS_DIR, reset)
+        def fit(self, reset=False):
+                def intern():
+                        X_train, y_train = fetch_annotated_candidates(self.TRAIN_DIR, self.features)
+                        classifier = custom_classifier(self.lsa_noun, self.lsa_verb, self.exps_lsa)
+                        return classifier.fit(X_train, y_train), y_train
+                corpus_id = encode(str.encode(self.CORPUS_DIR+self.TRAIN_DIR), &#39;hex&#39;).decode()+&#39;.pkl&#39;
+                self.classifier, self.y_train = utilities.drive_cached_func(intern, &#39;classifier&#39;+corpus_id, reset)()
+        def predict(self):
+                X_test = fetch_predictable_candidates(self.CORPUS_DIR, self.features)
+                return self.classifier.predict(X_test).drop(self.y_train.index).loc[lambda df : df[0] == &#39;YES&#39;] 
+        def evaluate(self):
+                X_test, y_test = fetch_annotated_candidates(self.TEST_DIR, self.features)
+                corpus_id = encode(str.encode(self.TEST_DIR), &#39;hex&#39;).decode()+&#39;.pkl&#39;
+                nb_tot = len(utilities.drive_cached_func(cupter.get_LVCs, &#39;truth&#39;+corpus_id)(self.TEST_DIR))
+                nb_inter = len(y_test.loc[y_test[&#39;isLVC&#39;] == &#39;YES&#39;])
+                
+                res = self.classifier.predict(X_test)
+                a = pd.merge(y_test,res
+                        , how=&#39;outer&#39;, left_index=True, right_index=True).loc[
+                                lambda df : (df[&#39;isLVC&#39;] == &#39;YES&#39;) | (df[0] == &#39;YES&#39;)
+                        ]
+                to_predict = pd.merge(self.y_train, y_test,
+                                how=&#39;outer&#39;, left_index=True, right_index=True).drop(&#39;isLVC_x&#39;, axis= 1).drop(self.y_train.index).fillna(&#39;~&#39;)
+                a = pd.merge(res, to_predict
+                        , how=&#39;inner&#39;, left_index=True, right_index=True)
+                print(a.loc[a[&#39;isLVC_y&#39;]== &#39;YES&#39;])
+                conf_mat = a.assign(count=1).groupby([0, &#39;isLVC_y&#39;]).count()
+                print(conf_mat)
+                try :
+                        print(&#39;r&#39;, conf_mat.loc[(&#39;YES&#39;,&#39;YES&#39;)] / (conf_mat.loc[(&#39;YES&#39;,&#39;YES&#39;)] + conf_mat.loc[(&#39;NO&#39;,&#39;YES&#39;)]))
+                except :
+                        print(&#39;r&#39;, 0)
+                try :
+                        print(&#39;p&#39;, conf_mat.loc[(&#39;YES&#39;,&#39;YES&#39;)] / (conf_mat.loc[(&#39;YES&#39;,&#39;YES&#39;)] + conf_mat.loc[(&#39;YES&#39;,&#39;NO&#39;)]))
+                except :
+                        print(&#39;p&#39;, 0)
+                print(&#39;kappa&#39;, cohen_kappa_score(y_test.sort_index(), res.sort_index()))
+                r = recall_score(y_test.sort_index(),res.sort_index(), pos_label=&#39;YES&#39;)
+                p = precision_score(y_test.sort_index(), res.sort_index(), pos_label=&#39;YES&#39;)
+                print(&#39;precision&#39;, p)
+                print(&#39;recall&#39;,r)
+                print(&#39;f1&#39;, (2 * p * r) / (p + r))
+                true_r = r  * nb_inter / nb_tot
+                print(&#39;true recall&#39;, true_r)
+                print(&#39;true f1&#39;, (2 * p * true_r) / (p + true_r))
+
+                precision, recall, threshold = precision_recall_curve(
+                                y_test.sort_index(), self.classifier.predict_proba(X_test)[&#39;YES&#39;].sort_index(), pos_label=&#39;YES&#39;)
+                f1 = [(2 * p * r) / (p + r) if p+r &gt; 0 else 0 for p, r in zip(precision, recall)]
+                true_recall = [r * nb_inter / nb_tot for r in recall]
+                true_f1 = [(2 * p * r) / (p + r) if p+r &gt; 0 else 0 for p, r in zip(precision, true_recall)]
+                plt.subplot(1,1,1)
+                sns.set_style(&#39;whitegrid&#39;)
+                sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(precision, threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+                , label=&#39;precision&#39;)
+                sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(recall,threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+                , label=&#39;recall&#39;)
+                sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(f1, threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+                , label=&#39;f1&#39;)
+                sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(true_recall,threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+                , label=&#39;true recall&#39;)
+                sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(true_f1, threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+                , label=&#39;true f1&#39;)
+                try : 
+                        pd.DataFrame(zip(
+                                self.classifier.compute_average_vector_features(X_test).columns,
+                                self.classifier.classifier.feature_importances_)
+                        ).set_index(0).sort_values(1).plot.pie(y=1, legend=False)
+                except :
+                        pass
+                plt.show()
+
+
+def nothing(*args, **kwargs):
+        pass
+
+def something():
+        print(&#39;a&#39;)
+
+
+
+
+
+if __name__ == &#39;__main__&#39; :             
+        manager = Manager()
+        parser = argparse.ArgumentParser()
+        parser.add_argument(&#39;-reset&#39;, dest=&#39;reset&#39;, nargs=&#39;+&#39;,
+                choices=[&#39;features&#39;, &#39;classifier&#39;, &#39;full&#39;], default=[])
+        # parser.add_argument(&#39;-train&#39;, dest=&#39;train&#39;,
+        #       action=&#39;store_const&#39;, const=manager.train, default=nothing)
+        parser.add_argument(&#39;-predict&#39;, dest=&#39;predict&#39;,
+                action=&#39;store_const&#39;, const=manager.predict, default=nothing)
+        parser.add_argument(&#39;-eval&#39;, dest=&#39;evaluate&#39;,
+                action=&#39;store_const&#39;, const=manager.evaluate, default=nothing)
+        parser.add_argument(&#39;-corpus_dir&#39;, default=DEV_DIR)
+        parser.add_argument(&#39;-train_dir&#39;, default=TRAIN_DIR)
+        parser.add_argument(&#39;-test_dir&#39;, default=TEST_DIR)
+        parser.add_argument(&#39;-save_dir&#39;, default=SAVE_DIR)
+        
+        args = parser.parse_args()
+        if &#39;full&#39; in args.reset:
+                utilities.clear()
+        manager.set_dir(args.corpus_dir, args.train_dir, args.test_dir, args.save_dir)
+        manager.train(&#39;features&#39; in args.reset, &#39;classifier&#39; in args.reset)
+        pred = args.predict()
+        if pred is not None: print(pred)
+        args.evaluate()
+        </code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="pred.fetch_annotated_candidates"><code class="name flex">
+<span>def <span class="ident">fetch_annotated_candidates</span></span>(<span>annotated_corpus_dir_path, features)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Recupère parmis les candidats ceux qui apparraisent dans corpus annoté</p>
+<p>EN : Fetch from the candidats those which appear in the annotated corpus</p>
+<h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>annotated_corpus_dir_path</code></strong> :&ensp;<code>str</code></dt>
+<dd>FR : Emplacement du corpus annoté<pre><code>EN : The annotated corpus path
+</code></pre>
+</dd>
+<dt><strong><code>features</code></strong> :&ensp;<code>str</code></dt>
+<dd>FR : Tableau des candidats et leurs mesures<pre><code>EN : Table of the candidtas and their features
+</code></pre>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>FR : Tableau des candidats restant et leur mesure<pre><code>EN : Table of the selected candidats and their features
+</code></pre>
+</dd>
+<dt><strong><code>y</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>FR : Tableau des candidats restant et leur annotation<pre><code>EN : Table of the selected candidats and their annotation
+</code></pre>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def fetch_annotated_candidates(annotated_corpus_dir_path :str, features : pd.DataFrame
+        ) -&gt; (pd.DataFrame, pd.DataFrame):
+        &#34;&#34;&#34;
+        FR : Recupère parmis les candidats ceux qui apparraisent dans corpus annoté\n
+        EN : Fetch from the candidats those which appear in the annotated corpus\n
+        Params
+        ------
+        annotated_corpus_dir_path : str\n
+                FR : Emplacement du corpus annoté\n
+                EN : The annotated corpus path\n
+        features : str\n
+                FR : Tableau des candidats et leurs mesures\n
+                EN : Table of the candidtas and their features\n
+        Returns
+        -------
+        X : DataFrame\n
+                FR : Tableau des candidats restant et leur mesure\n
+                EN : Table of the selected candidats and their features\n
+        y : DataFrame\n
+                FR : Tableau des candidats restant et leur annotation\n
+                EN : Table of the selected candidats and their annotation\n
+        &#34;&#34;&#34;
+        predictable_candidates = fetch_predictable_candidates(annotated_corpus_dir_path, features)
+
+        truth = cupter.get_LVCs(annotated_corpus_dir_path).assign(isLVC=&#39;YES&#39;)
+        features = pd.merge(predictable_candidates, truth, how=&#39;left&#39;, left_index= True, right_index= True).fillna(&#39;NO&#39;)
+        y = features[[&#39;isLVC&#39;]]
+        X = features.drop([&#39;isLVC&#39;], axis=1)
+        return X,y</code></pre>
+</details>
+</dd>
+<dt id="pred.fetch_predictable_candidates"><code class="name flex">
+<span>def <span class="ident">fetch_predictable_candidates</span></span>(<span>corpus_dir_path, features)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def fetch_predictable_candidates(corpus_dir_path : str, features : pd.DataFrame):
+        return features.reindex(measurer.find_candidats(corpus_dir_path).index).dropna()</code></pre>
+</details>
+</dd>
+<dt id="pred.fetch_regular_features"><code class="name flex">
+<span>def <span class="ident">fetch_regular_features</span></span>(<span>corpus_dir_path, reset=False)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Récupère les mesures standards tel que les probabilités, distances, patron syntaxique
+pour chaque candidat du corpus</p>
+<p>EN : Fetch regular features such as probabilities, distances, syntaxical pattern for
+each candidat of the given corpus </p>
+<h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>corpus_dir_path</code></strong> :&ensp;<code>str</code></dt>
+<dd>FR : Emplacement du corpus<pre><code>EN : The corpus path
+</code></pre>
+</dd>
+<dt><strong><code>reset</code></strong> :&ensp;<code>bool</code></dt>
+<dd>
+<h1 id="todoc">TODOC</h1>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>features</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>FR : Tableau des candidats et de leur mesures.<pre><code>EN : Table of the candidats and their features.
+</code></pre>
+</dd>
+<dt><strong><code>lsa_noun</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>FR : Tableau des candidats et du vecteur de leur nom<pre><code>EN : Table of the candidats and their noun vector
+</code></pre>
+</dd>
+<dt><strong><code>lsa_verb</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>FR : Tableau des candidats et du vecteur de leur verbe<pre><code>EN : Table of the candidats and their verb vector
+</code></pre>
+</dd>
+<dt><strong><code>exps_lsa</code></strong> :&ensp;<code>DataFrae</code></dt>
+<dd>
+<h1 id="todo">TODO</h1>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def fetch_regular_features(corpus_dir_path : str, reset=False ) -&gt; (
+        pd.DataFrame, pd.DataFrame, pd.DataFrame):
+        &#34;&#34;&#34;
+        FR : Récupère les mesures standards tel que les probabilités, distances, patron syntaxique
+        pour chaque candidat du corpus\n
+        EN : Fetch regular features such as probabilities, distances, syntaxical pattern for
+        each candidat of the given corpus \n
+        Params
+        ------
+        corpus_dir_path : str\n
+                FR : Emplacement du corpus\n
+                EN : The corpus path\n
+        reset : bool\n
+                #TODOC
+        Returns
+        -------
+        features : DataFrame\n
+                FR : Tableau des candidats et de leur mesures.\n
+                EN : Table of the candidats and their features.\n
+        lsa_noun : DataFrame\n
+                FR : Tableau des candidats et du vecteur de leur nom\n
+                EN : Table of the candidats and their noun vector\n
+        lsa_verb : DataFrame\n
+                FR : Tableau des candidats et du vecteur de leur verbe\n
+                EN : Table of the candidats and their verb vector\n
+        exps_lsa : DataFrae\n
+                #TODO
+        &#34;&#34;&#34;
+        corpus_id = encode(str.encode(corpus_dir_path), &#39;hex&#39;).decode()+&#39;.pkl&#39;
+        
+        get_features = utilities.drive_cached_func(measurer.get_features, &#39;features&#39;+corpus_id, reset)
+        features = get_features(corpus_dir_path)
+
+        get_pattern_frequency = utilities.drive_cached_func(
+                measurer.get_candidats_pattern_frequency, &#39;patterns&#39;+corpus_id, reset)
+        patterns = get_pattern_frequency(corpus_dir_path)
+        features = pd.merge(features, patterns, how = &#39;left&#39;, left_index=True, right_index=True).fillna(0)
+        
+        tmp = LSA(corpus_dir_path)
+        lsa = pd.DataFrame(tmp.lsa, index= tmp.word_id)
+        lsa.columns.name = &#39;WORD&#39;
+
+        exps_lsa = utilities.drive_cached_func(tmp,&#39;exps&#39;+corpus_id, reset)(features)
+
+        lsa_noun = pd.merge(features, lsa, how=&#39;left&#39;, left_on=&#39;NOUN&#39;, right_index=True).iloc[:,-100:].fillna(0)
+        lsa_verb = pd.merge(features, lsa, how=&#39;left&#39;, left_on=&#39;VERB&#39;, right_index=True).iloc[:,-100:].fillna(0)
+        len_v = pd.DataFrame(lsa_verb.abs().sum(axis=1))
+        len_v.columns = [&#39;len_v&#39;]
+        len_n = pd.DataFrame(lsa_noun.abs().sum(axis=1))
+        len_n.columns = [&#39;len_n&#39;]
+        
+        features = pd.merge(features, len_v, left_index=True, right_index=True)
+        features = pd.merge(features, len_n, left_index=True, right_index=True)
+        dist_noun = pd.DataFrame(utilities.cos_similarities(
+                exps_lsa.loc(axis=0)[lsa_noun.index].fillna(0).sort_index().values,
+                lsa_noun.sort_index().values
+        ), index=lsa_noun.sort_index().index)
+
+        dist_noun.columns = [&#39;dist_noun&#39;]
+        features = pd.merge(features, dist_noun, left_index=True, right_index=True)
+        # TODO replace loc with reindex
+        dist_verb = pd.DataFrame(utilities.cos_similarities(
+                exps_lsa.loc(axis=0)[lsa_verb.index].fillna(0).sort_index().values,
+                lsa_verb.sort_index().values
+        ), index=lsa_verb.sort_index().index)
+
+        dist_verb.columns = [&#39;dist_verb&#39;]
+        features = pd.merge(features, dist_verb, left_index=True, right_index=True)
+        
+        features = features.assign(
+                        dist_relative= features[&#39;dist_noun&#39;] / (features[&#39;dist_noun&#39;] + features[&#39;dist_verb&#39;])
+                ).fillna(0.5)
+        return features, lsa_noun, lsa_verb, exps_lsa</code></pre>
+</details>
+</dd>
+<dt id="pred.nothing"><code class="name flex">
+<span>def <span class="ident">nothing</span></span>(<span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def nothing(*args, **kwargs):
+        pass</code></pre>
+</details>
+</dd>
+<dt id="pred.something"><code class="name flex">
+<span>def <span class="ident">something</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def something():
+        print(&#39;a&#39;)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="pred.Manager"><code class="flex name class">
+<span>class <span class="ident">Manager</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">class Manager():
+        #TODOC
+        def set_dir(self, corpus_dir, train_dir, test_dir, save_dir):
+                self.CORPUS_DIR = corpus_dir
+                self.TRAIN_DIR = train_dir
+                self.TEST_DIR = test_dir
+                self.SAVE_DIR = save_dir
+                utilities.SAVE_DIR.set(save_dir)
+        def train(self, reset_features = False, reset_classifier= False):
+                self.compute_features(reset_features)
+                self.fit(reset_classifier)
+        def compute_features(self, reset = False):
+                self.features, self.lsa_noun, self.lsa_verb, self.exps_lsa = fetch_regular_features(
+                        self.CORPUS_DIR, reset)
+        def fit(self, reset=False):
+                def intern():
+                        X_train, y_train = fetch_annotated_candidates(self.TRAIN_DIR, self.features)
+                        classifier = custom_classifier(self.lsa_noun, self.lsa_verb, self.exps_lsa)
+                        return classifier.fit(X_train, y_train), y_train
+                corpus_id = encode(str.encode(self.CORPUS_DIR+self.TRAIN_DIR), &#39;hex&#39;).decode()+&#39;.pkl&#39;
+                self.classifier, self.y_train = utilities.drive_cached_func(intern, &#39;classifier&#39;+corpus_id, reset)()
+        def predict(self):
+                X_test = fetch_predictable_candidates(self.CORPUS_DIR, self.features)
+                return self.classifier.predict(X_test).drop(self.y_train.index).loc[lambda df : df[0] == &#39;YES&#39;] 
+        def evaluate(self):
+                X_test, y_test = fetch_annotated_candidates(self.TEST_DIR, self.features)
+                corpus_id = encode(str.encode(self.TEST_DIR), &#39;hex&#39;).decode()+&#39;.pkl&#39;
+                nb_tot = len(utilities.drive_cached_func(cupter.get_LVCs, &#39;truth&#39;+corpus_id)(self.TEST_DIR))
+                nb_inter = len(y_test.loc[y_test[&#39;isLVC&#39;] == &#39;YES&#39;])
+                
+                res = self.classifier.predict(X_test)
+                a = pd.merge(y_test,res
+                        , how=&#39;outer&#39;, left_index=True, right_index=True).loc[
+                                lambda df : (df[&#39;isLVC&#39;] == &#39;YES&#39;) | (df[0] == &#39;YES&#39;)
+                        ]
+                to_predict = pd.merge(self.y_train, y_test,
+                                how=&#39;outer&#39;, left_index=True, right_index=True).drop(&#39;isLVC_x&#39;, axis= 1).drop(self.y_train.index).fillna(&#39;~&#39;)
+                a = pd.merge(res, to_predict
+                        , how=&#39;inner&#39;, left_index=True, right_index=True)
+                print(a.loc[a[&#39;isLVC_y&#39;]== &#39;YES&#39;])
+                conf_mat = a.assign(count=1).groupby([0, &#39;isLVC_y&#39;]).count()
+                print(conf_mat)
+                try :
+                        print(&#39;r&#39;, conf_mat.loc[(&#39;YES&#39;,&#39;YES&#39;)] / (conf_mat.loc[(&#39;YES&#39;,&#39;YES&#39;)] + conf_mat.loc[(&#39;NO&#39;,&#39;YES&#39;)]))
+                except :
+                        print(&#39;r&#39;, 0)
+                try :
+                        print(&#39;p&#39;, conf_mat.loc[(&#39;YES&#39;,&#39;YES&#39;)] / (conf_mat.loc[(&#39;YES&#39;,&#39;YES&#39;)] + conf_mat.loc[(&#39;YES&#39;,&#39;NO&#39;)]))
+                except :
+                        print(&#39;p&#39;, 0)
+                print(&#39;kappa&#39;, cohen_kappa_score(y_test.sort_index(), res.sort_index()))
+                r = recall_score(y_test.sort_index(),res.sort_index(), pos_label=&#39;YES&#39;)
+                p = precision_score(y_test.sort_index(), res.sort_index(), pos_label=&#39;YES&#39;)
+                print(&#39;precision&#39;, p)
+                print(&#39;recall&#39;,r)
+                print(&#39;f1&#39;, (2 * p * r) / (p + r))
+                true_r = r  * nb_inter / nb_tot
+                print(&#39;true recall&#39;, true_r)
+                print(&#39;true f1&#39;, (2 * p * true_r) / (p + true_r))
+
+                precision, recall, threshold = precision_recall_curve(
+                                y_test.sort_index(), self.classifier.predict_proba(X_test)[&#39;YES&#39;].sort_index(), pos_label=&#39;YES&#39;)
+                f1 = [(2 * p * r) / (p + r) if p+r &gt; 0 else 0 for p, r in zip(precision, recall)]
+                true_recall = [r * nb_inter / nb_tot for r in recall]
+                true_f1 = [(2 * p * r) / (p + r) if p+r &gt; 0 else 0 for p, r in zip(precision, true_recall)]
+                plt.subplot(1,1,1)
+                sns.set_style(&#39;whitegrid&#39;)
+                sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(precision, threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+                , label=&#39;precision&#39;)
+                sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(recall,threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+                , label=&#39;recall&#39;)
+                sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(f1, threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+                , label=&#39;f1&#39;)
+                sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(true_recall,threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+                , label=&#39;true recall&#39;)
+                sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(true_f1, threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+                , label=&#39;true f1&#39;)
+                try : 
+                        pd.DataFrame(zip(
+                                self.classifier.compute_average_vector_features(X_test).columns,
+                                self.classifier.classifier.feature_importances_)
+                        ).set_index(0).sort_values(1).plot.pie(y=1, legend=False)
+                except :
+                        pass
+                plt.show()</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="pred.Manager.compute_features"><code class="name flex">
+<span>def <span class="ident">compute_features</span></span>(<span>self, reset=False)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def compute_features(self, reset = False):
+        self.features, self.lsa_noun, self.lsa_verb, self.exps_lsa = fetch_regular_features(
+                self.CORPUS_DIR, reset)</code></pre>
+</details>
+</dd>
+<dt id="pred.Manager.evaluate"><code class="name flex">
+<span>def <span class="ident">evaluate</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def evaluate(self):
+        X_test, y_test = fetch_annotated_candidates(self.TEST_DIR, self.features)
+        corpus_id = encode(str.encode(self.TEST_DIR), &#39;hex&#39;).decode()+&#39;.pkl&#39;
+        nb_tot = len(utilities.drive_cached_func(cupter.get_LVCs, &#39;truth&#39;+corpus_id)(self.TEST_DIR))
+        nb_inter = len(y_test.loc[y_test[&#39;isLVC&#39;] == &#39;YES&#39;])
+        
+        res = self.classifier.predict(X_test)
+        a = pd.merge(y_test,res
+                , how=&#39;outer&#39;, left_index=True, right_index=True).loc[
+                        lambda df : (df[&#39;isLVC&#39;] == &#39;YES&#39;) | (df[0] == &#39;YES&#39;)
+                ]
+        to_predict = pd.merge(self.y_train, y_test,
+                        how=&#39;outer&#39;, left_index=True, right_index=True).drop(&#39;isLVC_x&#39;, axis= 1).drop(self.y_train.index).fillna(&#39;~&#39;)
+        a = pd.merge(res, to_predict
+                , how=&#39;inner&#39;, left_index=True, right_index=True)
+        print(a.loc[a[&#39;isLVC_y&#39;]== &#39;YES&#39;])
+        conf_mat = a.assign(count=1).groupby([0, &#39;isLVC_y&#39;]).count()
+        print(conf_mat)
+        try :
+                print(&#39;r&#39;, conf_mat.loc[(&#39;YES&#39;,&#39;YES&#39;)] / (conf_mat.loc[(&#39;YES&#39;,&#39;YES&#39;)] + conf_mat.loc[(&#39;NO&#39;,&#39;YES&#39;)]))
+        except :
+                print(&#39;r&#39;, 0)
+        try :
+                print(&#39;p&#39;, conf_mat.loc[(&#39;YES&#39;,&#39;YES&#39;)] / (conf_mat.loc[(&#39;YES&#39;,&#39;YES&#39;)] + conf_mat.loc[(&#39;YES&#39;,&#39;NO&#39;)]))
+        except :
+                print(&#39;p&#39;, 0)
+        print(&#39;kappa&#39;, cohen_kappa_score(y_test.sort_index(), res.sort_index()))
+        r = recall_score(y_test.sort_index(),res.sort_index(), pos_label=&#39;YES&#39;)
+        p = precision_score(y_test.sort_index(), res.sort_index(), pos_label=&#39;YES&#39;)
+        print(&#39;precision&#39;, p)
+        print(&#39;recall&#39;,r)
+        print(&#39;f1&#39;, (2 * p * r) / (p + r))
+        true_r = r  * nb_inter / nb_tot
+        print(&#39;true recall&#39;, true_r)
+        print(&#39;true f1&#39;, (2 * p * true_r) / (p + true_r))
+
+        precision, recall, threshold = precision_recall_curve(
+                        y_test.sort_index(), self.classifier.predict_proba(X_test)[&#39;YES&#39;].sort_index(), pos_label=&#39;YES&#39;)
+        f1 = [(2 * p * r) / (p + r) if p+r &gt; 0 else 0 for p, r in zip(precision, recall)]
+        true_recall = [r * nb_inter / nb_tot for r in recall]
+        true_f1 = [(2 * p * r) / (p + r) if p+r &gt; 0 else 0 for p, r in zip(precision, true_recall)]
+        plt.subplot(1,1,1)
+        sns.set_style(&#39;whitegrid&#39;)
+        sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(precision, threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+        , label=&#39;precision&#39;)
+        sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(recall,threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+        , label=&#39;recall&#39;)
+        sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(f1, threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+        , label=&#39;f1&#39;)
+        sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(true_recall,threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+        , label=&#39;true recall&#39;)
+        sns.lineplot(x=&#34;x&#34;, y=&#34;y&#34;, data=pd.DataFrame(zip(true_f1, threshold), columns=[&#39;y&#39;,&#39;x&#39;])
+        , label=&#39;true f1&#39;)
+        try : 
+                pd.DataFrame(zip(
+                        self.classifier.compute_average_vector_features(X_test).columns,
+                        self.classifier.classifier.feature_importances_)
+                ).set_index(0).sort_values(1).plot.pie(y=1, legend=False)
+        except :
+                pass
+        plt.show()</code></pre>
+</details>
+</dd>
+<dt id="pred.Manager.fit"><code class="name flex">
+<span>def <span class="ident">fit</span></span>(<span>self, reset=False)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def fit(self, reset=False):
+        def intern():
+                X_train, y_train = fetch_annotated_candidates(self.TRAIN_DIR, self.features)
+                classifier = custom_classifier(self.lsa_noun, self.lsa_verb, self.exps_lsa)
+                return classifier.fit(X_train, y_train), y_train
+        corpus_id = encode(str.encode(self.CORPUS_DIR+self.TRAIN_DIR), &#39;hex&#39;).decode()+&#39;.pkl&#39;
+        self.classifier, self.y_train = utilities.drive_cached_func(intern, &#39;classifier&#39;+corpus_id, reset)()</code></pre>
+</details>
+</dd>
+<dt id="pred.Manager.predict"><code class="name flex">
+<span>def <span class="ident">predict</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def predict(self):
+        X_test = fetch_predictable_candidates(self.CORPUS_DIR, self.features)
+        return self.classifier.predict(X_test).drop(self.y_train.index).loc[lambda df : df[0] == &#39;YES&#39;] </code></pre>
+</details>
+</dd>
+<dt id="pred.Manager.set_dir"><code class="name flex">
+<span>def <span class="ident">set_dir</span></span>(<span>self, corpus_dir, train_dir, test_dir, save_dir)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def set_dir(self, corpus_dir, train_dir, test_dir, save_dir):
+        self.CORPUS_DIR = corpus_dir
+        self.TRAIN_DIR = train_dir
+        self.TEST_DIR = test_dir
+        self.SAVE_DIR = save_dir
+        utilities.SAVE_DIR.set(save_dir)</code></pre>
+</details>
+</dd>
+<dt id="pred.Manager.train"><code class="name flex">
+<span>def <span class="ident">train</span></span>(<span>self, reset_features=False, reset_classifier=False)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def train(self, reset_features = False, reset_classifier= False):
+        self.compute_features(reset_features)
+        self.fit(reset_classifier)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="pred.custom_classifier"><code class="flex name class">
+<span>class <span class="ident">custom_classifier</span></span>
+<span>(</span><span>lsa_noun, lsa_verb, exps_lsa)</span>
+</code></dt>
+<dd>
+<section class="desc"><h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>lsa_noun</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>FR : Tableau des candidats et du vecteur de leur nom<pre><code>EN : Table of the candidats and their noun vector
+</code></pre>
+</dd>
+<dt><strong><code>lsa_verb</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>FR : Tableau des candidats et du vecteur de leur verbe<pre><code>EN : Table of the candidats and their verb vector
+</code></pre>
+</dd>
+<dt><strong><code>exps_lsa</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>
+<h1 id="todoc">TODOC</h1>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">class custom_classifier():
+        def __init__(self, lsa_noun : pd.DataFrame, lsa_verb : pd.DataFrame, exps_lsa : pd.DataFrame):
+                &#34;&#34;&#34;
+                Params
+                ------
+                lsa_noun : DataFrame\n
+                        FR : Tableau des candidats et du vecteur de leur nom\n
+                        EN : Table of the candidats and their noun vector\n
+                lsa_verb : DataFrame\n
+                        FR : Tableau des candidats et du vecteur de leur verbe\n
+                        EN : Table of the candidats and their verb vector\n
+                exps_lsa : DataFrame\n
+                        #TODOC
+                &#34;&#34;&#34;
+                self.lsa_noun = lsa_noun
+                self.lsa_verb = lsa_verb
+                self.exps_lsa = exps_lsa
+        def fit(self, X : pd.DataFrame, y : pd.DataFrame):
+                &#34;&#34;&#34;
+                FR : Entraine le modèle de prédiction\n
+                EN : Fit the prediction model\n
+                Params
+                ------
+                X : DataFrame\n
+                        FR : Tableau des candidats et leurs features\n
+                        EN : Table of the candidats and their features\n
+                y : DataFrame\n
+                        FR : Tableau des candidats et leur annotation\n
+                        EN : Table of the candidats and their annotation\n
+                &#34;&#34;&#34;
+                vecs = self.lsa_noun
+                vecs = pd.merge(vecs, y , left_index= True, right_index= True)[lambda x: x.isLVC==&#39;YES&#39;]
+                self.noun_vec = vecs.mean(axis=0).to_frame().transpose()
+                vecs = self.lsa_verb
+                vecs = pd.merge(vecs, y , left_index= True, right_index= True)[lambda x: x.isLVC==&#39;YES&#39;]
+                self.verb_vec = vecs.mean(axis=0).to_frame().transpose()
+                vecs = self.lsa_verb
+                vecs = pd.merge(vecs, y , left_index= True, right_index= True)[lambda x: x.isLVC==&#39;YES&#39;]
+                self.exps_vec = vecs.mean(axis=0).to_frame().transpose()
+                
+                X_tmp = self.compute_average_vector_features(X)
+                
+
+                self.classifier = GradientBoostingClassifier(n_estimators=500,
+                learning_rate=0.15, min_samples_split=3, max_leaf_nodes=15
+                , loss=&#39;exponential&#39;)
+
+                #shuffle
+                shufling = pd.merge(X_tmp, y, left_index=True, right_index=True)
+                shufling.sample(frac=1)
+                y_tmp = shufling[[&#39;isLVC&#39;]]
+                X_tmp = shufling.drop([&#39;isLVC&#39;], 1)
+
+                self.classifier.fit(X_tmp, y_tmp[&#39;isLVC&#39;])
+                return self
+        def compute_average_vector_features(self, X : pd.DataFrame) -&gt; pd.DataFrame:
+                &#34;&#34;&#34;
+                FR : Calcul pour chaque candidats des mesures en rapport à la distance entre les
+                vecteurs du candidats et le vecteur moyen des candidats positif\n
+                EN : Compute for each candidats features regarding the distance between the vector of the
+                candidats and the average vector of postitive candidats\n
+                Params
+                ------
+                X : DataFrame\n
+                        FR : Tableau des candidats et leurs features\n
+                        EN : Table of the candidats and their features\n
+                Returns
+                -------
+                new_X : DataFrame\n
+                        FR : Tableau X auquel on a ajouté quelques mesures\n
+                        EN : Table X with a few more features\n
+                &#34;&#34;&#34;
+                tmp = pd.DataFrame(
+                cosine_similarity(
+                                self.noun_vec
+                                , self.lsa_noun.fillna(0)
+                )[0], index=self.lsa_noun.index)
+                tmp.columns= [&#39;noun&#39;]
+                X_tmp = pd.merge(X, tmp, left_index=True, right_index=True)
+
+                tmp = pd.DataFrame(
+                cosine_similarity(
+                                self.verb_vec
+                                , self.lsa_verb.fillna(0)
+                )[0], index=self.lsa_verb.index)
+                tmp.columns= [&#39;verb&#39;]
+                X_tmp = pd.merge(X_tmp, tmp, left_index=True, right_index=True)
+
+                tmp = pd.DataFrame(
+                cosine_similarity(
+                                self.exps_vec
+                                , self.exps_lsa.fillna(0)
+                )[0], index=self.exps_lsa.index)
+                tmp.columns= [&#39;exp&#39;]
+                X_tmp = pd.merge(X_tmp, tmp, left_index=True, right_index=True)
+                return X_tmp
+        def predict(self, X : pd.DataFrame) -&gt; pd.DataFrame:
+                &#34;&#34;&#34;
+                FR : Prédit la classe des candidats fournie en X\n
+                EN : Predict X&#39;s candidats&#39; classe\n
+                Params
+                ------
+                X : DataFrame\n
+                        FR : Tableau des candidats et leurs features\n
+                        EN : Table of the candidats and their features\n
+                Returns
+                -------
+                y_predicted : DataFrame\n
+                        FR : Tableau des candidats et leur classe prédite\n
+                        EN : Table of the candidats and their predicted class\n
+                &#34;&#34;&#34;
+                X = self.compute_average_vector_features(X)
+                return pd.DataFrame(self.classifier.predict(X), index=X.index)
+        def predict_proba(self, X):
+                #TODOC
+                X = self.compute_average_vector_features(X)
+                return pd.DataFrame(self.classifier.predict_proba(X), index=X.index, columns=self.classifier.classes_)</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="pred.custom_classifier.compute_average_vector_features"><code class="name flex">
+<span>def <span class="ident">compute_average_vector_features</span></span>(<span>self, X)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Calcul pour chaque candidats des mesures en rapport à la distance entre les
+vecteurs du candidats et le vecteur moyen des candidats positif</p>
+<p>EN : Compute for each candidats features regarding the distance between the vector of the
+candidats and the average vector of postitive candidats</p>
+<h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>FR : Tableau des candidats et leurs features<pre><code>EN : Table of the candidats and their features
+</code></pre>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>new_X</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>FR : Tableau X auquel on a ajouté quelques mesures<pre><code>EN : Table X with a few more features
+</code></pre>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def compute_average_vector_features(self, X : pd.DataFrame) -&gt; pd.DataFrame:
+        &#34;&#34;&#34;
+        FR : Calcul pour chaque candidats des mesures en rapport à la distance entre les
+        vecteurs du candidats et le vecteur moyen des candidats positif\n
+        EN : Compute for each candidats features regarding the distance between the vector of the
+        candidats and the average vector of postitive candidats\n
+        Params
+        ------
+        X : DataFrame\n
+                FR : Tableau des candidats et leurs features\n
+                EN : Table of the candidats and their features\n
+        Returns
+        -------
+        new_X : DataFrame\n
+                FR : Tableau X auquel on a ajouté quelques mesures\n
+                EN : Table X with a few more features\n
+        &#34;&#34;&#34;
+        tmp = pd.DataFrame(
+        cosine_similarity(
+                        self.noun_vec
+                        , self.lsa_noun.fillna(0)
+        )[0], index=self.lsa_noun.index)
+        tmp.columns= [&#39;noun&#39;]
+        X_tmp = pd.merge(X, tmp, left_index=True, right_index=True)
+
+        tmp = pd.DataFrame(
+        cosine_similarity(
+                        self.verb_vec
+                        , self.lsa_verb.fillna(0)
+        )[0], index=self.lsa_verb.index)
+        tmp.columns= [&#39;verb&#39;]
+        X_tmp = pd.merge(X_tmp, tmp, left_index=True, right_index=True)
+
+        tmp = pd.DataFrame(
+        cosine_similarity(
+                        self.exps_vec
+                        , self.exps_lsa.fillna(0)
+        )[0], index=self.exps_lsa.index)
+        tmp.columns= [&#39;exp&#39;]
+        X_tmp = pd.merge(X_tmp, tmp, left_index=True, right_index=True)
+        return X_tmp</code></pre>
+</details>
+</dd>
+<dt id="pred.custom_classifier.fit"><code class="name flex">
+<span>def <span class="ident">fit</span></span>(<span>self, X, y)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Entraine le modèle de prédiction</p>
+<p>EN : Fit the prediction model</p>
+<h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>FR : Tableau des candidats et leurs features<pre><code>EN : Table of the candidats and their features
+</code></pre>
+</dd>
+<dt><strong><code>y</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>FR : Tableau des candidats et leur annotation<pre><code>EN : Table of the candidats and their annotation
+</code></pre>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def fit(self, X : pd.DataFrame, y : pd.DataFrame):
+        &#34;&#34;&#34;
+        FR : Entraine le modèle de prédiction\n
+        EN : Fit the prediction model\n
+        Params
+        ------
+        X : DataFrame\n
+                FR : Tableau des candidats et leurs features\n
+                EN : Table of the candidats and their features\n
+        y : DataFrame\n
+                FR : Tableau des candidats et leur annotation\n
+                EN : Table of the candidats and their annotation\n
+        &#34;&#34;&#34;
+        vecs = self.lsa_noun
+        vecs = pd.merge(vecs, y , left_index= True, right_index= True)[lambda x: x.isLVC==&#39;YES&#39;]
+        self.noun_vec = vecs.mean(axis=0).to_frame().transpose()
+        vecs = self.lsa_verb
+        vecs = pd.merge(vecs, y , left_index= True, right_index= True)[lambda x: x.isLVC==&#39;YES&#39;]
+        self.verb_vec = vecs.mean(axis=0).to_frame().transpose()
+        vecs = self.lsa_verb
+        vecs = pd.merge(vecs, y , left_index= True, right_index= True)[lambda x: x.isLVC==&#39;YES&#39;]
+        self.exps_vec = vecs.mean(axis=0).to_frame().transpose()
+        
+        X_tmp = self.compute_average_vector_features(X)
+        
+
+        self.classifier = GradientBoostingClassifier(n_estimators=500,
+        learning_rate=0.15, min_samples_split=3, max_leaf_nodes=15
+        , loss=&#39;exponential&#39;)
+
+        #shuffle
+        shufling = pd.merge(X_tmp, y, left_index=True, right_index=True)
+        shufling.sample(frac=1)
+        y_tmp = shufling[[&#39;isLVC&#39;]]
+        X_tmp = shufling.drop([&#39;isLVC&#39;], 1)
+
+        self.classifier.fit(X_tmp, y_tmp[&#39;isLVC&#39;])
+        return self</code></pre>
+</details>
+</dd>
+<dt id="pred.custom_classifier.predict"><code class="name flex">
+<span>def <span class="ident">predict</span></span>(<span>self, X)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Prédit la classe des candidats fournie en X</p>
+<p>EN : Predict X's candidats' classe</p>
+<h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>FR : Tableau des candidats et leurs features<pre><code>EN : Table of the candidats and their features
+</code></pre>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>y_predicted</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>FR : Tableau des candidats et leur classe prédite<pre><code>EN : Table of the candidats and their predicted class
+</code></pre>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def predict(self, X : pd.DataFrame) -&gt; pd.DataFrame:
+        &#34;&#34;&#34;
+        FR : Prédit la classe des candidats fournie en X\n
+        EN : Predict X&#39;s candidats&#39; classe\n
+        Params
+        ------
+        X : DataFrame\n
+                FR : Tableau des candidats et leurs features\n
+                EN : Table of the candidats and their features\n
+        Returns
+        -------
+        y_predicted : DataFrame\n
+                FR : Tableau des candidats et leur classe prédite\n
+                EN : Table of the candidats and their predicted class\n
+        &#34;&#34;&#34;
+        X = self.compute_average_vector_features(X)
+        return pd.DataFrame(self.classifier.predict(X), index=X.index)</code></pre>
+</details>
+</dd>
+<dt id="pred.custom_classifier.predict_proba"><code class="name flex">
+<span>def <span class="ident">predict_proba</span></span>(<span>self, X)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def predict_proba(self, X):
+        #TODOC
+        X = self.compute_average_vector_features(X)
+        return pd.DataFrame(self.classifier.predict_proba(X), index=X.index, columns=self.classifier.classes_)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="pred.fetch_annotated_candidates" href="#pred.fetch_annotated_candidates">fetch_annotated_candidates</a></code></li>
+<li><code><a title="pred.fetch_predictable_candidates" href="#pred.fetch_predictable_candidates">fetch_predictable_candidates</a></code></li>
+<li><code><a title="pred.fetch_regular_features" href="#pred.fetch_regular_features">fetch_regular_features</a></code></li>
+<li><code><a title="pred.nothing" href="#pred.nothing">nothing</a></code></li>
+<li><code><a title="pred.something" href="#pred.something">something</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="pred.Manager" href="#pred.Manager">Manager</a></code></h4>
+<ul class="two-column">
+<li><code><a title="pred.Manager.compute_features" href="#pred.Manager.compute_features">compute_features</a></code></li>
+<li><code><a title="pred.Manager.evaluate" href="#pred.Manager.evaluate">evaluate</a></code></li>
+<li><code><a title="pred.Manager.fit" href="#pred.Manager.fit">fit</a></code></li>
+<li><code><a title="pred.Manager.predict" href="#pred.Manager.predict">predict</a></code></li>
+<li><code><a title="pred.Manager.set_dir" href="#pred.Manager.set_dir">set_dir</a></code></li>
+<li><code><a title="pred.Manager.train" href="#pred.Manager.train">train</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pred.custom_classifier" href="#pred.custom_classifier">custom_classifier</a></code></h4>
+<ul class="">
+<li><code><a title="pred.custom_classifier.compute_average_vector_features" href="#pred.custom_classifier.compute_average_vector_features">compute_average_vector_features</a></code></li>
+<li><code><a title="pred.custom_classifier.fit" href="#pred.custom_classifier.fit">fit</a></code></li>
+<li><code><a title="pred.custom_classifier.predict" href="#pred.custom_classifier.predict">predict</a></code></li>
+<li><code><a title="pred.custom_classifier.predict_proba" href="#pred.custom_classifier.predict_proba">predict_proba</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.6.3</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
