@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.6.3" />
+<title>measurer API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase;cursor:pointer}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>measurer</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">from conllu_reader import corpus_batcher
+from collections import defaultdict
+import pandas as pd
+import numpy as np
+
+# ORDER 1_1_1_1
+# ORDER 1_2_1
+def find_candidats(corpus_dir_path : str) -&gt; (pd.DataFrame) : 
+    &#34;&#34;&#34;
+    FR : Génère une DataFrame de tous les couples (nom, verbe) du corpus pour lesquelles le
+    verbs pointe sur le nom, et compte le nombre d&#39;occurence de chaque candidats\n 
+    EN : Creates the DataFrame of all the (noun, verb) in the corpus where the verb points towards
+    the noun and count the number of occurences of each candidates.\n
+    Params
+    ------
+    corpus_dir_path :\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    Returns
+    -------
+    candidats : DataFrame[(&#39;NOUN&#39;, &#39;VERB&#39;) : (9,)]\n
+        FR : Tableau des candidats, toutes colonnes à 0 sauf, la première représentant le
+        nombre d&#39;occurence du candidat\n
+        EN : Table of the candidats, all columns at 0 except the first describing the
+        number of occurences of the candidat.\n   
+    &#34;&#34;&#34; 
+    #ONEDAY manage insertion
+    candidates = {}
+    for data, sentences in corpus_batcher(corpus_dir_path, batch_size= 100_000):
+        verbs = data.loc[data.UPosTag == &#39;VERB&#39;] #select the line with verbs
+        nouns = data.loc[data.UPosTag == &#39;NOUN&#39;] #select the line with nouns
+        #keeps the couples noun-verb where the noun point to the verb
+        candidats = (pd.merge(nouns, verbs, left_on=[&#39;SId&#39;, &#39;Head&#39;]
+                              , right_on=[&#39;SId&#39;, &#39;Id&#39;]
+                              , suffixes=[&#39;_n&#39;, &#39;_v&#39;]))[[&#39;Lemma_n&#39;, &#39;Lemma_v&#39;]]
+        # count the number of occurences
+        for row in candidats.to_numpy():
+            candidates.setdefault((row[0], row[1]), [0, 0, 0, 0, 0, 0, 0, 0, 0])[0]+=1
+    #generate the candidates dataframe
+    candidates = pd.DataFrame(data = candidates).transpose()
+    candidates.index.names = [&#39;NOUN&#39;, &#39;VERB&#39;]
+    candidates.set_axis([&#39;N&#39;, &#39;P&#39;, &#39;P_n&#39;, &#39;P_v&#39;, &#39;dist&#39;, &#39;P_obl&#39;, &#39;P_subj&#39;, &#39;P_obj&#39;, &#39;P_other&#39;], axis = 1, inplace= True)
+    return candidates
+    
+#ORDER 1_1_1_2
+def compute_features(corpus_dir_path: str, candidates: pd.DataFrame) -&gt; pd.DataFrame:
+    &#34;&#34;&#34;
+    FR : Calcul diverses mesures pour chacun des candidats en se basant sur le corpus\n
+    EN : Compute various features for each of the candidats by using the corpus \n
+    Params
+    ------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    couples : DataFrame[(&#39;NOUN&#39;, &#39;VERB&#39;) : (9,)]\n
+        FR : Tableau des candidats, toutes colonnes doivent être à 0,
+        sauf la première représentant le nombre d&#39;occurence du candidat\n
+        EN : Table of the candidats, all columns should be at 0 
+        except the first describing the number of occurences of the candidat.\n
+    Returns
+    -------
+    features : DataFrame[(&#39;NOUN&#39;, &#39;VERB&#39;) : (15,)]\n
+        FR : Tableau des candidats, toutes les colonnes mise à jour\n
+        EN : Candidats table, all columns updated\n
+    See also
+    --------
+    find_candidats\n
+    &#34;&#34;&#34;
+    for data, sentences in corpus_batcher(corpus_dir_path, batch_size= 100_000):
+        &#39;&#39;&#39;
+        Les diverses comptes sont réalisés sur des batchs du corpus,
+        la df &#39;t&#39; sert de tampon afin d&#39;ajouter le resultat des comptes au df concerné
+        &#39;&#39;&#39;
+        #### Setup ####
+        
+        # isole les verbes, nom, (nom, verbe) du batch dans des df
+        v = data.loc[data.UPosTag == &#39;VERB&#39;] 
+        n = data.loc[data.UPosTag == &#39;NOUN&#39;]
+        s = pd.merge(n.reset_index(), v.reset_index()
+                     , left_on=[&#39;SId&#39;, &#39;Head&#39;]
+                     , right_on=[&#39;SId&#39;, &#39;Id&#39;]
+                     , suffixes = [&#39;_n&#39;, &#39;_v&#39;]).set_index(&#39;SId&#39;)
+
+        #### Distance nom, verbe ####
+        
+        # Pour chaque couple (nom, verbe) unique; fait la somme des distance (nombre de mots) entre le nom est le verbe des instances de (nom, verbe)
+        t = s.assign(dist=np.abs(pd.to_numeric(s.Id_n) - pd.to_numeric(s.Id_v))).groupby([&#39;Lemma_n&#39;, &#39;Lemma_v&#39;]).sum()
+        add_to_col(candidates, t, &#39;dist&#39;)
+
+        #### Fréquence relation ####
+
+        # Pour chaque couple (nom, verbe) ; compte le nombre de fois où le couple est lié par une relation de type
+        # obj, obl ou subj
+        t = s[[&#39;DepRel_n&#39;, &#39;Lemma_n&#39;, &#39;Lemma_v&#39;]].assign(N_rel=0).groupby([&#39;DepRel_n&#39;, &#39;Lemma_n&#39;, &#39;Lemma_v&#39;]).count()
+        add_to_col(candidates, t.loc[(&#39;obj&#39;)], &#39;P_obj&#39;)
+        add_to_col(candidates, t.loc[(&#39;obl&#39;)], &#39;P_obl&#39;)
+        add_to_col(candidates, t.loc[(&#39;nsubj&#39;)], &#39;P_subj&#39;)
+
+    #### Distance nom, verbe ####
+    
+    # Pour chaque couple (nom, verbe) ; calcule la distanc moyenne entre le nom et le verbe
+    
+    candidates.update(pd.DataFrame({&#39;dist&#39; : candidates[&#39;dist&#39;] / candidates[&#39;N&#39;]}))
+    
+    #### Probablitées ####
+    candidates.update(pd.DataFrame({&#39;P&#39; : candidates[&#39;N&#39;] / candidates[&#39;N&#39;].sum()}))
+    
+    candidates.update(
+        pd.merge(
+            candidates,
+            pd.DataFrame({&#39;P_n&#39; : candidates[&#39;N&#39;].groupby(&#39;NOUN&#39;).sum() / candidates[&#39;N&#39;].sum()}),
+            left_on = &#39;NOUN&#39;,
+            right_index = True,
+            suffixes=[&#39;a&#39;,&#39;&#39;]
+        )[&#39;P_n&#39;])
+    
+    candidates.update(
+        pd.merge(
+            candidates,
+            pd.DataFrame({&#39;P_v&#39; : candidates[&#39;N&#39;].groupby(&#39;VERB&#39;).sum() / candidates[&#39;N&#39;].sum()}),
+            left_on = &#39;VERB&#39;,
+            right_index = True,
+            suffixes=[&#39;a&#39;,&#39;&#39;]
+        )[&#39;P_v&#39;])
+
+
+    # Pour chaque couple nom, verbe ; calcule la probabilité qu&#39;un nom quelconque soit le nom en question sachant le verbe
+    candidates = candidates.assign(P_n_given_v = candidates[&#39;P&#39;] / candidates[&#39;P_v&#39;])
+    # Pour chaque couple nom, verbe ; calcule la probabilité qu&#39;un verbe quelconque soit le verbe en question sachant le nom
+    candidates = candidates.assign(P_v_given_n = candidates[&#39;P&#39;] / candidates[&#39;P_n&#39;])
+    # Pour chaque nom ; calcule la variance de la probabilité du nom
+    candidates = candidates.assign(V_n = candidates[&#39;P_n&#39;] * (1 - candidates[&#39;P_n&#39;]))
+    # Pour chaque verbe ; calcule la variance de la probabilité du verbe
+    candidates = candidates.assign(V_v = candidates[&#39;P_v&#39;] * (1 - candidates[&#39;P_v&#39;]))
+    # Pour chaque couple (nom, verbe) ; calcule la covariance de la probabilité du nom et la probabilité du verbe
+    candidates = candidates.assign(V = candidates[&#39;P&#39;] - (candidates[&#39;P_n&#39;] * candidates[&#39;P_v&#39;]))
+    # Pour chaque cuple (nom, verbe) ; calcule la corrélation entre la probabilité du nom et la probabilité du verbe
+    candidates = candidates.assign(corr = candidates[&#39;V&#39;] / (np.sqrt(candidates[&#39;V_n&#39;]) * np.sqrt(candidates[&#39;V_v&#39;])))
+    # Pour chaque couple nom, verbe ; calcule le pmi
+    candidates = candidates.assign(pmi = np.log(candidates[&#39;P_n_given_v&#39;] / candidates[&#39;P_n&#39;]))
+
+    #### Fréquence relation ####
+    
+    #Pour chaque couple nom, verbe ; calcule la fréquence à laquelle le nom est objet du verbe
+    candidates.update(pd.DataFrame({&#39;P_obj&#39; : candidates[&#39;P_obj&#39;] / candidates[&#39;N&#39;]}))
+    #Pour chaque couple nom, verbe ; calcule la fréquence à laquelle le nom est oblique du verbe
+    candidates.update(pd.DataFrame({&#39;P_obl&#39; : candidates[&#39;P_obl&#39;] / candidates[&#39;N&#39;]}))
+    #Pour chaque couple nom, verbe ; calcule la fréquence à laquelle le nom est sujet du verbe
+    candidates.update(pd.DataFrame({&#39;P_subj&#39; : candidates[&#39;P_subj&#39;] / candidates[&#39;N&#39;]}))
+    #Pour chaque couple nom, verbe ; calcule la fréquence à laquelle le nom n&#39;est, ni objet, oblique ou sujet du verbe
+    candidates.update(pd.DataFrame({&#39;P_other&#39; : 1 - (candidates[&#39;P_obj&#39;] + candidates[&#39;P_obl&#39;] + candidates[&#39;P_subj&#39;])}))
+    
+    candidates = candidates.drop([&#39;N&#39;], axis=1)
+    return candidates.fillna(0)
+
+#ORDER 1_1_2_1
+def find_all_patterns(corpus_dir_path : str) -&gt; list:
+    &#34;&#34;&#34;
+    FR : Trouve tout les patrons syntaxique du corpus \n
+    EN : Find all the syntaxical patterns of the corpus\n
+    Params
+    ------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+            EN : The corpus path\n
+    Returns
+    -------
+    all_patterns : list[(Sid : int, (word1 :str, word2 :str, pattern : list[pos : str,]))]\n
+        FR : Liste des patrons syntaxique avec l&#39;id de leur phrase
+        et du mot avant et après le patron\n
+        EN : Liste of the syntaxical pattern with th id ofthe sentence
+        and the word before and after the pattern \n
+    &#34;&#34;&#34;
+    d = {}
+    for data, sentences in corpus_batcher(corpus_dir_path):
+        verbes = data.loc[data.UPosTag == &#39;VERB&#39;] 
+        nouns = data.loc[data.UPosTag == &#39;NOUN&#39;]
+        candidates = pd.merge(nouns.reset_index(), verbes.reset_index()
+                     , left_on=[&#39;SId&#39;, &#39;Head&#39;]
+                     , right_on=[&#39;SId&#39;, &#39;Id&#39;]
+                     , suffixes = [&#39;_n&#39;, &#39;_v&#39;]).set_index(&#39;SId&#39;)
+        all_patterns = []
+        temp = []
+        sentence_sid = -1
+        gen = couples_per_sentences(candidates)
+        for (Sid, Id), pos in data[&#39;UPosTag&#39;].iteritems():
+            try :
+                while(sentence_sid &lt; Sid):
+                    sentence_sid, sentence_couples = next(gen)
+                    all_patterns.append((sentence_sid, sentence_couples))
+                    #print(si, Sid)
+                for curr_couple in sentence_couples:
+                    if int(Id) &gt; curr_couple[0] and int(Id) &lt; curr_couple[1]:
+                        curr_couple[2].append(pos)
+            except :
+                pass 
+        return all_patterns
+
+# ORDER 1_1_2_1_1
+def couples_per_sentences(couples):
+    &#34;&#34;&#34;
+    FR : Génère pour chaque phrase une liste des couples (nom,verbe) ou (verbe,nom) 
+    trié par ordre d&#39;apparition de l&#39;element du couple apparraisant le premier\n
+    EN : Yield for each sentence a list of the couples (noun,verb) or (verb, noun) ordered
+    by apparition order of the first element of the couple to appear\n
+    Parameters
+    ----------
+    couples : Dataframe\n
+        FR : Tableau des couples (nom,verbe) -unique- du corpus\n
+        EN : Table of the -unique- couples (noun,verb) of the corpus\n
+    Yields
+    ------
+    Sid : int
+        FR : identifiant de la phrase\n
+        EN : Sentence id\n
+    patterns : list[(word1 : str, word2 :str, [])]\n
+        FR : Identifiant des mots avant et après le patron
+        ainsi qu&#39;une liste vide pour y mettre le patron\n
+        EN : Ids of the words before and after the pattern, and an empty list to put the pattern\n
+    &#34;&#34;&#34;
+    old = couples.iloc[0].name
+    temp = []
+    for sid, idn, idv in couples[[&#39;Id_n&#39;, &#39;Id_v&#39;]].itertuples():
+        idn = int(idn)
+        idv = int(idv)
+        if sid != old :
+            yield old, sorted(temp, key= lambda x : int(x[0]))
+            old = sid
+            temp = []
+        else:
+            temp.append((min(idn,idv), max(idn,idv), [],))
+    yield old, sorted(temp, key= lambda x : int(x[0]))
+
+# ORDER 1_1_2_2
+def get_most_frequent_patterns(all_patterns : list)-&gt; list:
+    &#34;&#34;&#34;
+    FR : Réduit la liste des patrons aux 20 patrons les plus fréquent 
+    et retire les identifiants.
+    EN : Filter the list of patterns to the 20 most frequent patterns\n
+    and remove the ids.\n
+    Params
+    ------
+    all_patterns : list[(Sid : int, (word1 :str, word2 :str, pattern : list[pos : str,]))]\n
+        FR : Liste des patrons syntaxique avec l&#39;id de leur phrase
+        et du mot avant et après le patron\n
+        EN : Liste of the syntaxical pattern with th id ofthe sentence
+        and the word before and after the pattern \n
+    Returns
+    -------
+    frequent_pattern : list[pattern : list[pos : str]]\n
+        FR : liste des 20 patrons les plus fréquent\n
+        EN : list of the 20 most frequent pattern\n
+    &#34;&#34;&#34;
+    dic = defaultdict(int)
+    for _,i in all_patterns:
+        for _,_,pattern in i:
+            dic[tuple(pattern)]+=1
+    return [a[0] for a in sorted([(k,v) for k,v in dic.items()], key = lambda x: x[1], reverse=True)[:20]]
+
+#ORDER 1_1_2
+def get_candidats_pattern_frequency(corpus_dir_path :str) -&gt; pd.DataFrame:
+    &#34;&#34;&#34;
+    FR : Calcule pour chaque candidat du corpus la fréquence des patrons fréquent\n
+    EN : Compute for each candidat of the corpus the frequency of the frequent patterns\n
+    Params
+    ------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    Returns
+    -------
+    frequent_pattern_frequency : DataFrame\n
+        FR : Tableau des candidats et leur fréquence associer à chaque patron fréquent\n
+        EN : Table of the candidats and their associated frequence to each frequent pattern.\n
+    &#34;&#34;&#34;
+    all_patterns = find_all_patterns(corpus_dir_path)
+    frequent_patterns = get_most_frequent_patterns(all_patterns)
+    dic = defaultdict(lambda : defaultdict(int))
+    n = 0
+    for data, sentences in corpus_batcher(corpus_dir_path):
+        last = data.iloc[-1].name[0]
+        for Sid, patterns in all_patterns[n:]:
+            if Sid &gt; last:
+                break
+            #ONEDAY should add a pattern &#34;other&#34; frequence would be more accurate from it
+            for id_w1, id_w2, pattern in patterns:
+                if tuple(pattern) in frequent_patterns:
+                    lemma_w1 = data.loc[(Sid,str(id_w1))][&#39;Lemma&#39;]
+                    lemma_w2 = data.loc[(Sid,str(id_w2))][&#39;Lemma&#39;]
+                    if data.loc[(Sid,str(id_w1))][&#39;UPosTag&#39;] == &#39;VERB&#39;:
+                        dic[(lemma_w2, lemma_w1)][tuple(pattern)] +=1
+                    else :
+                        dic[(lemma_w1, lemma_w2)][tuple(pattern)] +=1
+            n+=1
+    res = pd.DataFrame.from_dict(dic, orient=&#39;index&#39;).fillna(0)
+    res.columns = frequent_patterns
+    res.index.names = (&#39;NOUN&#39;, &#39;VERB&#39;)
+    res = res.div(res.sum(axis=1), axis=0)
+    return res
+
+#ORDER 1_1_1_2_1
+def add_to_col(df_to_update : pd.DataFrame, to_add : pd.Series, col_to_update_name):
+    &#34;&#34;&#34;
+    FR : Ajoute les valeurs de to_add à la colonne col_to_update_name de la DataFrae df_to_update.
+    EN : Add the values of to_add to the col_to_update_name column of the df_to_update DataFrame
+    &#34;&#34;&#34;
+    df_to_update.update(
+        pd.DataFrame({col_to_update_name :
+             pd.concat(
+                 [df_to_update[[col_to_update_name]],to_add]
+                 , axis=1
+                 , sort=True)
+             .fillna(0)
+             .sum(axis=1)
+            })
+        )
+
+# ORDER 1_1_1
+def get_features(corpus_dir_path : str) -&gt; pd.DataFrame:
+    &#34;&#34;&#34;
+    FR : Trouve tout les candidats du corpus, puis calcul leurs mesures\n
+    EN : Find all candidats of the corpus then compute their features\n
+    Params
+    ------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    Returns
+    -------
+    features : DataFrame\n
+        FR : Tableau des candidats et de leurs mesures\n
+        EN : Table of the candidats and their features\n
+    &#34;&#34;&#34;
+    c = find_candidats(corpus_dir_path)
+    features = compute_features(corpus_dir_path, c)
+    return features</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="measurer.add_to_col"><code class="name flex">
+<span>def <span class="ident">add_to_col</span></span>(<span>df_to_update, to_add, col_to_update_name)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Ajoute les valeurs de to_add à la colonne col_to_update_name de la DataFrae df_to_update.
+EN : Add the values of to_add to the col_to_update_name column of the df_to_update DataFrame</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def add_to_col(df_to_update : pd.DataFrame, to_add : pd.Series, col_to_update_name):
+    &#34;&#34;&#34;
+    FR : Ajoute les valeurs de to_add à la colonne col_to_update_name de la DataFrae df_to_update.
+    EN : Add the values of to_add to the col_to_update_name column of the df_to_update DataFrame
+    &#34;&#34;&#34;
+    df_to_update.update(
+        pd.DataFrame({col_to_update_name :
+             pd.concat(
+                 [df_to_update[[col_to_update_name]],to_add]
+                 , axis=1
+                 , sort=True)
+             .fillna(0)
+             .sum(axis=1)
+            })
+        )</code></pre>
+</details>
+</dd>
+<dt id="measurer.compute_features"><code class="name flex">
+<span>def <span class="ident">compute_features</span></span>(<span>corpus_dir_path, candidates)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Calcul diverses mesures pour chacun des candidats en se basant sur le corpus</p>
+<p>EN : Compute various features for each of the candidats by using the corpus </p>
+<h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>corpus_dir_path</code></strong> :&ensp;<code>str</code></dt>
+<dd>
+<p>FR : Emplacement du corpus</p>
+<p>EN : The corpus path</p>
+</dd>
+<dt><strong><code>couples</code></strong> :&ensp;<code>DataFrame</code>[(<code>'NOUN'</code>, <code>'VERB'</code>) : (<code>9</code>,)]</dt>
+<dd>
+<p>FR : Tableau des candidats, toutes colonnes doivent être à 0,
+sauf la première représentant le nombre d'occurence du candidat</p>
+<p>EN : Table of the candidats, all columns should be at 0
+except the first describing the number of occurences of the candidat.</p>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>features</code></strong> :&ensp;<code>DataFrame</code>[(<code>'NOUN'</code>, <code>'VERB'</code>) : (<code>15</code>,)]</dt>
+<dd>
+<p>FR : Tableau des candidats, toutes les colonnes mise à jour</p>
+<p>EN : Candidats table, all columns updated</p>
+</dd>
+</dl>
+<h2 id="see-also">See also</h2>
+<p><a title="measurer.find_candidats" href="#measurer.find_candidats"><code>find_candidats()</code></a></p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def compute_features(corpus_dir_path: str, candidates: pd.DataFrame) -&gt; pd.DataFrame:
+    &#34;&#34;&#34;
+    FR : Calcul diverses mesures pour chacun des candidats en se basant sur le corpus\n
+    EN : Compute various features for each of the candidats by using the corpus \n
+    Params
+    ------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    couples : DataFrame[(&#39;NOUN&#39;, &#39;VERB&#39;) : (9,)]\n
+        FR : Tableau des candidats, toutes colonnes doivent être à 0,
+        sauf la première représentant le nombre d&#39;occurence du candidat\n
+        EN : Table of the candidats, all columns should be at 0 
+        except the first describing the number of occurences of the candidat.\n
+    Returns
+    -------
+    features : DataFrame[(&#39;NOUN&#39;, &#39;VERB&#39;) : (15,)]\n
+        FR : Tableau des candidats, toutes les colonnes mise à jour\n
+        EN : Candidats table, all columns updated\n
+    See also
+    --------
+    find_candidats\n
+    &#34;&#34;&#34;
+    for data, sentences in corpus_batcher(corpus_dir_path, batch_size= 100_000):
+        &#39;&#39;&#39;
+        Les diverses comptes sont réalisés sur des batchs du corpus,
+        la df &#39;t&#39; sert de tampon afin d&#39;ajouter le resultat des comptes au df concerné
+        &#39;&#39;&#39;
+        #### Setup ####
+        
+        # isole les verbes, nom, (nom, verbe) du batch dans des df
+        v = data.loc[data.UPosTag == &#39;VERB&#39;] 
+        n = data.loc[data.UPosTag == &#39;NOUN&#39;]
+        s = pd.merge(n.reset_index(), v.reset_index()
+                     , left_on=[&#39;SId&#39;, &#39;Head&#39;]
+                     , right_on=[&#39;SId&#39;, &#39;Id&#39;]
+                     , suffixes = [&#39;_n&#39;, &#39;_v&#39;]).set_index(&#39;SId&#39;)
+
+        #### Distance nom, verbe ####
+        
+        # Pour chaque couple (nom, verbe) unique; fait la somme des distance (nombre de mots) entre le nom est le verbe des instances de (nom, verbe)
+        t = s.assign(dist=np.abs(pd.to_numeric(s.Id_n) - pd.to_numeric(s.Id_v))).groupby([&#39;Lemma_n&#39;, &#39;Lemma_v&#39;]).sum()
+        add_to_col(candidates, t, &#39;dist&#39;)
+
+        #### Fréquence relation ####
+
+        # Pour chaque couple (nom, verbe) ; compte le nombre de fois où le couple est lié par une relation de type
+        # obj, obl ou subj
+        t = s[[&#39;DepRel_n&#39;, &#39;Lemma_n&#39;, &#39;Lemma_v&#39;]].assign(N_rel=0).groupby([&#39;DepRel_n&#39;, &#39;Lemma_n&#39;, &#39;Lemma_v&#39;]).count()
+        add_to_col(candidates, t.loc[(&#39;obj&#39;)], &#39;P_obj&#39;)
+        add_to_col(candidates, t.loc[(&#39;obl&#39;)], &#39;P_obl&#39;)
+        add_to_col(candidates, t.loc[(&#39;nsubj&#39;)], &#39;P_subj&#39;)
+
+    #### Distance nom, verbe ####
+    
+    # Pour chaque couple (nom, verbe) ; calcule la distanc moyenne entre le nom et le verbe
+    
+    candidates.update(pd.DataFrame({&#39;dist&#39; : candidates[&#39;dist&#39;] / candidates[&#39;N&#39;]}))
+    
+    #### Probablitées ####
+    candidates.update(pd.DataFrame({&#39;P&#39; : candidates[&#39;N&#39;] / candidates[&#39;N&#39;].sum()}))
+    
+    candidates.update(
+        pd.merge(
+            candidates,
+            pd.DataFrame({&#39;P_n&#39; : candidates[&#39;N&#39;].groupby(&#39;NOUN&#39;).sum() / candidates[&#39;N&#39;].sum()}),
+            left_on = &#39;NOUN&#39;,
+            right_index = True,
+            suffixes=[&#39;a&#39;,&#39;&#39;]
+        )[&#39;P_n&#39;])
+    
+    candidates.update(
+        pd.merge(
+            candidates,
+            pd.DataFrame({&#39;P_v&#39; : candidates[&#39;N&#39;].groupby(&#39;VERB&#39;).sum() / candidates[&#39;N&#39;].sum()}),
+            left_on = &#39;VERB&#39;,
+            right_index = True,
+            suffixes=[&#39;a&#39;,&#39;&#39;]
+        )[&#39;P_v&#39;])
+
+
+    # Pour chaque couple nom, verbe ; calcule la probabilité qu&#39;un nom quelconque soit le nom en question sachant le verbe
+    candidates = candidates.assign(P_n_given_v = candidates[&#39;P&#39;] / candidates[&#39;P_v&#39;])
+    # Pour chaque couple nom, verbe ; calcule la probabilité qu&#39;un verbe quelconque soit le verbe en question sachant le nom
+    candidates = candidates.assign(P_v_given_n = candidates[&#39;P&#39;] / candidates[&#39;P_n&#39;])
+    # Pour chaque nom ; calcule la variance de la probabilité du nom
+    candidates = candidates.assign(V_n = candidates[&#39;P_n&#39;] * (1 - candidates[&#39;P_n&#39;]))
+    # Pour chaque verbe ; calcule la variance de la probabilité du verbe
+    candidates = candidates.assign(V_v = candidates[&#39;P_v&#39;] * (1 - candidates[&#39;P_v&#39;]))
+    # Pour chaque couple (nom, verbe) ; calcule la covariance de la probabilité du nom et la probabilité du verbe
+    candidates = candidates.assign(V = candidates[&#39;P&#39;] - (candidates[&#39;P_n&#39;] * candidates[&#39;P_v&#39;]))
+    # Pour chaque cuple (nom, verbe) ; calcule la corrélation entre la probabilité du nom et la probabilité du verbe
+    candidates = candidates.assign(corr = candidates[&#39;V&#39;] / (np.sqrt(candidates[&#39;V_n&#39;]) * np.sqrt(candidates[&#39;V_v&#39;])))
+    # Pour chaque couple nom, verbe ; calcule le pmi
+    candidates = candidates.assign(pmi = np.log(candidates[&#39;P_n_given_v&#39;] / candidates[&#39;P_n&#39;]))
+
+    #### Fréquence relation ####
+    
+    #Pour chaque couple nom, verbe ; calcule la fréquence à laquelle le nom est objet du verbe
+    candidates.update(pd.DataFrame({&#39;P_obj&#39; : candidates[&#39;P_obj&#39;] / candidates[&#39;N&#39;]}))
+    #Pour chaque couple nom, verbe ; calcule la fréquence à laquelle le nom est oblique du verbe
+    candidates.update(pd.DataFrame({&#39;P_obl&#39; : candidates[&#39;P_obl&#39;] / candidates[&#39;N&#39;]}))
+    #Pour chaque couple nom, verbe ; calcule la fréquence à laquelle le nom est sujet du verbe
+    candidates.update(pd.DataFrame({&#39;P_subj&#39; : candidates[&#39;P_subj&#39;] / candidates[&#39;N&#39;]}))
+    #Pour chaque couple nom, verbe ; calcule la fréquence à laquelle le nom n&#39;est, ni objet, oblique ou sujet du verbe
+    candidates.update(pd.DataFrame({&#39;P_other&#39; : 1 - (candidates[&#39;P_obj&#39;] + candidates[&#39;P_obl&#39;] + candidates[&#39;P_subj&#39;])}))
+    
+    candidates = candidates.drop([&#39;N&#39;], axis=1)
+    return candidates.fillna(0)</code></pre>
+</details>
+</dd>
+<dt id="measurer.couples_per_sentences"><code class="name flex">
+<span>def <span class="ident">couples_per_sentences</span></span>(<span>couples)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Génère pour chaque phrase une liste des couples (nom,verbe) ou (verbe,nom)
+trié par ordre d'apparition de l'element du couple apparraisant le premier</p>
+<p>EN : Yield for each sentence a list of the couples (noun,verb) or (verb, noun) ordered
+by apparition order of the first element of the couple to appear</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>couples</code></strong> :&ensp;<code>Dataframe</code></dt>
+<dd>
+<p>FR : Tableau des couples (nom,verbe) -unique- du corpus</p>
+<p>EN : Table of the -unique- couples (noun,verb) of the corpus</p>
+</dd>
+</dl>
+<h2 id="yields">Yields</h2>
+<dl>
+<dt><strong><code>Sid</code></strong> :&ensp;<code>int</code></dt>
+<dd>
+<p>FR : identifiant de la phrase</p>
+<p>EN : Sentence id</p>
+</dd>
+<dt><strong><code>patterns</code></strong> :&ensp;<code>list</code>[(<code>word1</code> : <code>str</code>, <code>word2</code> :<code>str</code>, [])]</dt>
+<dd>
+<p>FR : Identifiant des mots avant et après le patron
+ainsi qu'une liste vide pour y mettre le patron</p>
+<p>EN : Ids of the words before and after the pattern, and an empty list to put the pattern</p>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def couples_per_sentences(couples):
+    &#34;&#34;&#34;
+    FR : Génère pour chaque phrase une liste des couples (nom,verbe) ou (verbe,nom) 
+    trié par ordre d&#39;apparition de l&#39;element du couple apparraisant le premier\n
+    EN : Yield for each sentence a list of the couples (noun,verb) or (verb, noun) ordered
+    by apparition order of the first element of the couple to appear\n
+    Parameters
+    ----------
+    couples : Dataframe\n
+        FR : Tableau des couples (nom,verbe) -unique- du corpus\n
+        EN : Table of the -unique- couples (noun,verb) of the corpus\n
+    Yields
+    ------
+    Sid : int
+        FR : identifiant de la phrase\n
+        EN : Sentence id\n
+    patterns : list[(word1 : str, word2 :str, [])]\n
+        FR : Identifiant des mots avant et après le patron
+        ainsi qu&#39;une liste vide pour y mettre le patron\n
+        EN : Ids of the words before and after the pattern, and an empty list to put the pattern\n
+    &#34;&#34;&#34;
+    old = couples.iloc[0].name
+    temp = []
+    for sid, idn, idv in couples[[&#39;Id_n&#39;, &#39;Id_v&#39;]].itertuples():
+        idn = int(idn)
+        idv = int(idv)
+        if sid != old :
+            yield old, sorted(temp, key= lambda x : int(x[0]))
+            old = sid
+            temp = []
+        else:
+            temp.append((min(idn,idv), max(idn,idv), [],))
+    yield old, sorted(temp, key= lambda x : int(x[0]))</code></pre>
+</details>
+</dd>
+<dt id="measurer.find_all_patterns"><code class="name flex">
+<span>def <span class="ident">find_all_patterns</span></span>(<span>corpus_dir_path)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Trouve tout les patrons syntaxique du corpus </p>
+<p>EN : Find all the syntaxical patterns of the corpus</p>
+<h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>corpus_dir_path</code></strong> :&ensp;<code>str</code></dt>
+<dd>FR : Emplacement du corpus<pre><code>EN : The corpus path
+</code></pre>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>all_patterns</code></strong> :&ensp;<code>list</code>[(<code>Sid</code> : <code>int</code>, (<code>word1</code> :<code>str</code>, <code>word2</code> :<code>str</code>, <code>pattern</code> : <code>list</code>[<code>pos</code> : <code>str</code>,]))]</dt>
+<dd>
+<p>FR : Liste des patrons syntaxique avec l'id de leur phrase
+et du mot avant et après le patron</p>
+<p>EN : Liste of the syntaxical pattern with th id ofthe sentence
+and the word before and after the pattern</p>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def find_all_patterns(corpus_dir_path : str) -&gt; list:
+    &#34;&#34;&#34;
+    FR : Trouve tout les patrons syntaxique du corpus \n
+    EN : Find all the syntaxical patterns of the corpus\n
+    Params
+    ------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+            EN : The corpus path\n
+    Returns
+    -------
+    all_patterns : list[(Sid : int, (word1 :str, word2 :str, pattern : list[pos : str,]))]\n
+        FR : Liste des patrons syntaxique avec l&#39;id de leur phrase
+        et du mot avant et après le patron\n
+        EN : Liste of the syntaxical pattern with th id ofthe sentence
+        and the word before and after the pattern \n
+    &#34;&#34;&#34;
+    d = {}
+    for data, sentences in corpus_batcher(corpus_dir_path):
+        verbes = data.loc[data.UPosTag == &#39;VERB&#39;] 
+        nouns = data.loc[data.UPosTag == &#39;NOUN&#39;]
+        candidates = pd.merge(nouns.reset_index(), verbes.reset_index()
+                     , left_on=[&#39;SId&#39;, &#39;Head&#39;]
+                     , right_on=[&#39;SId&#39;, &#39;Id&#39;]
+                     , suffixes = [&#39;_n&#39;, &#39;_v&#39;]).set_index(&#39;SId&#39;)
+        all_patterns = []
+        temp = []
+        sentence_sid = -1
+        gen = couples_per_sentences(candidates)
+        for (Sid, Id), pos in data[&#39;UPosTag&#39;].iteritems():
+            try :
+                while(sentence_sid &lt; Sid):
+                    sentence_sid, sentence_couples = next(gen)
+                    all_patterns.append((sentence_sid, sentence_couples))
+                    #print(si, Sid)
+                for curr_couple in sentence_couples:
+                    if int(Id) &gt; curr_couple[0] and int(Id) &lt; curr_couple[1]:
+                        curr_couple[2].append(pos)
+            except :
+                pass 
+        return all_patterns</code></pre>
+</details>
+</dd>
+<dt id="measurer.find_candidats"><code class="name flex">
+<span>def <span class="ident">find_candidats</span></span>(<span>corpus_dir_path)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Génère une DataFrame de tous les couples (nom, verbe) du corpus pour lesquelles le
+verbs pointe sur le nom, et compte le nombre d'occurence de chaque candidats</p>
+<p>EN : Creates the DataFrame of all the (noun, verb) in the corpus where the verb points towards
+the noun and count the number of occurences of each candidates.</p>
+<h2 id="params">Params</h2>
+<p>corpus_dir_path :</p>
+<pre><code>FR : Emplacement du corpus
+
+EN : The corpus path
+</code></pre>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>candidats</code></strong> :&ensp;<code>DataFrame</code>[(<code>'NOUN'</code>, <code>'VERB'</code>) : (<code>9</code>,)]</dt>
+<dd>
+<p>FR : Tableau des candidats, toutes colonnes à 0 sauf, la première représentant le
+nombre d'occurence du candidat</p>
+<p>EN : Table of the candidats, all columns at 0 except the first describing the
+number of occurences of the candidat.</p>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def find_candidats(corpus_dir_path : str) -&gt; (pd.DataFrame) : 
+    &#34;&#34;&#34;
+    FR : Génère une DataFrame de tous les couples (nom, verbe) du corpus pour lesquelles le
+    verbs pointe sur le nom, et compte le nombre d&#39;occurence de chaque candidats\n 
+    EN : Creates the DataFrame of all the (noun, verb) in the corpus where the verb points towards
+    the noun and count the number of occurences of each candidates.\n
+    Params
+    ------
+    corpus_dir_path :\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    Returns
+    -------
+    candidats : DataFrame[(&#39;NOUN&#39;, &#39;VERB&#39;) : (9,)]\n
+        FR : Tableau des candidats, toutes colonnes à 0 sauf, la première représentant le
+        nombre d&#39;occurence du candidat\n
+        EN : Table of the candidats, all columns at 0 except the first describing the
+        number of occurences of the candidat.\n   
+    &#34;&#34;&#34; 
+    #ONEDAY manage insertion
+    candidates = {}
+    for data, sentences in corpus_batcher(corpus_dir_path, batch_size= 100_000):
+        verbs = data.loc[data.UPosTag == &#39;VERB&#39;] #select the line with verbs
+        nouns = data.loc[data.UPosTag == &#39;NOUN&#39;] #select the line with nouns
+        #keeps the couples noun-verb where the noun point to the verb
+        candidats = (pd.merge(nouns, verbs, left_on=[&#39;SId&#39;, &#39;Head&#39;]
+                              , right_on=[&#39;SId&#39;, &#39;Id&#39;]
+                              , suffixes=[&#39;_n&#39;, &#39;_v&#39;]))[[&#39;Lemma_n&#39;, &#39;Lemma_v&#39;]]
+        # count the number of occurences
+        for row in candidats.to_numpy():
+            candidates.setdefault((row[0], row[1]), [0, 0, 0, 0, 0, 0, 0, 0, 0])[0]+=1
+    #generate the candidates dataframe
+    candidates = pd.DataFrame(data = candidates).transpose()
+    candidates.index.names = [&#39;NOUN&#39;, &#39;VERB&#39;]
+    candidates.set_axis([&#39;N&#39;, &#39;P&#39;, &#39;P_n&#39;, &#39;P_v&#39;, &#39;dist&#39;, &#39;P_obl&#39;, &#39;P_subj&#39;, &#39;P_obj&#39;, &#39;P_other&#39;], axis = 1, inplace= True)
+    return candidates</code></pre>
+</details>
+</dd>
+<dt id="measurer.get_candidats_pattern_frequency"><code class="name flex">
+<span>def <span class="ident">get_candidats_pattern_frequency</span></span>(<span>corpus_dir_path)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Calcule pour chaque candidat du corpus la fréquence des patrons fréquent</p>
+<p>EN : Compute for each candidat of the corpus the frequency of the frequent patterns</p>
+<h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>corpus_dir_path</code></strong> :&ensp;<code>str</code></dt>
+<dd>
+<p>FR : Emplacement du corpus</p>
+<p>EN : The corpus path</p>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>frequent_pattern_frequency</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>
+<p>FR : Tableau des candidats et leur fréquence associer à chaque patron fréquent</p>
+<p>EN : Table of the candidats and their associated frequence to each frequent pattern.</p>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def get_candidats_pattern_frequency(corpus_dir_path :str) -&gt; pd.DataFrame:
+    &#34;&#34;&#34;
+    FR : Calcule pour chaque candidat du corpus la fréquence des patrons fréquent\n
+    EN : Compute for each candidat of the corpus the frequency of the frequent patterns\n
+    Params
+    ------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    Returns
+    -------
+    frequent_pattern_frequency : DataFrame\n
+        FR : Tableau des candidats et leur fréquence associer à chaque patron fréquent\n
+        EN : Table of the candidats and their associated frequence to each frequent pattern.\n
+    &#34;&#34;&#34;
+    all_patterns = find_all_patterns(corpus_dir_path)
+    frequent_patterns = get_most_frequent_patterns(all_patterns)
+    dic = defaultdict(lambda : defaultdict(int))
+    n = 0
+    for data, sentences in corpus_batcher(corpus_dir_path):
+        last = data.iloc[-1].name[0]
+        for Sid, patterns in all_patterns[n:]:
+            if Sid &gt; last:
+                break
+            #ONEDAY should add a pattern &#34;other&#34; frequence would be more accurate from it
+            for id_w1, id_w2, pattern in patterns:
+                if tuple(pattern) in frequent_patterns:
+                    lemma_w1 = data.loc[(Sid,str(id_w1))][&#39;Lemma&#39;]
+                    lemma_w2 = data.loc[(Sid,str(id_w2))][&#39;Lemma&#39;]
+                    if data.loc[(Sid,str(id_w1))][&#39;UPosTag&#39;] == &#39;VERB&#39;:
+                        dic[(lemma_w2, lemma_w1)][tuple(pattern)] +=1
+                    else :
+                        dic[(lemma_w1, lemma_w2)][tuple(pattern)] +=1
+            n+=1
+    res = pd.DataFrame.from_dict(dic, orient=&#39;index&#39;).fillna(0)
+    res.columns = frequent_patterns
+    res.index.names = (&#39;NOUN&#39;, &#39;VERB&#39;)
+    res = res.div(res.sum(axis=1), axis=0)
+    return res</code></pre>
+</details>
+</dd>
+<dt id="measurer.get_features"><code class="name flex">
+<span>def <span class="ident">get_features</span></span>(<span>corpus_dir_path)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Trouve tout les candidats du corpus, puis calcul leurs mesures</p>
+<p>EN : Find all candidats of the corpus then compute their features</p>
+<h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>corpus_dir_path</code></strong> :&ensp;<code>str</code></dt>
+<dd>
+<p>FR : Emplacement du corpus</p>
+<p>EN : The corpus path</p>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>features</code></strong> :&ensp;<code>DataFrame</code></dt>
+<dd>
+<p>FR : Tableau des candidats et de leurs mesures</p>
+<p>EN : Table of the candidats and their features</p>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def get_features(corpus_dir_path : str) -&gt; pd.DataFrame:
+    &#34;&#34;&#34;
+    FR : Trouve tout les candidats du corpus, puis calcul leurs mesures\n
+    EN : Find all candidats of the corpus then compute their features\n
+    Params
+    ------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    Returns
+    -------
+    features : DataFrame\n
+        FR : Tableau des candidats et de leurs mesures\n
+        EN : Table of the candidats and their features\n
+    &#34;&#34;&#34;
+    c = find_candidats(corpus_dir_path)
+    features = compute_features(corpus_dir_path, c)
+    return features</code></pre>
+</details>
+</dd>
+<dt id="measurer.get_most_frequent_patterns"><code class="name flex">
+<span>def <span class="ident">get_most_frequent_patterns</span></span>(<span>all_patterns)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Réduit la liste des patrons aux 20 patrons les plus fréquent
+et retire les identifiants.
+EN : Filter the list of patterns to the 20 most frequent patterns</p>
+<p>and remove the ids.</p>
+<h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>all_patterns</code></strong> :&ensp;<code>list</code>[(<code>Sid</code> : <code>int</code>, (<code>word1</code> :<code>str</code>, <code>word2</code> :<code>str</code>, <code>pattern</code> : <code>list</code>[<code>pos</code> : <code>str</code>,]))]</dt>
+<dd>
+<p>FR : Liste des patrons syntaxique avec l'id de leur phrase
+et du mot avant et après le patron</p>
+<p>EN : Liste of the syntaxical pattern with th id ofthe sentence
+and the word before and after the pattern</p>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>frequent_pattern</code></strong> :&ensp;<code>list</code>[<code>pattern</code> : <code>list</code>[<code>pos</code> : <code>str</code>]]</dt>
+<dd>
+<p>FR : liste des 20 patrons les plus fréquent</p>
+<p>EN : list of the 20 most frequent pattern</p>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def get_most_frequent_patterns(all_patterns : list)-&gt; list:
+    &#34;&#34;&#34;
+    FR : Réduit la liste des patrons aux 20 patrons les plus fréquent 
+    et retire les identifiants.
+    EN : Filter the list of patterns to the 20 most frequent patterns\n
+    and remove the ids.\n
+    Params
+    ------
+    all_patterns : list[(Sid : int, (word1 :str, word2 :str, pattern : list[pos : str,]))]\n
+        FR : Liste des patrons syntaxique avec l&#39;id de leur phrase
+        et du mot avant et après le patron\n
+        EN : Liste of the syntaxical pattern with th id ofthe sentence
+        and the word before and after the pattern \n
+    Returns
+    -------
+    frequent_pattern : list[pattern : list[pos : str]]\n
+        FR : liste des 20 patrons les plus fréquent\n
+        EN : list of the 20 most frequent pattern\n
+    &#34;&#34;&#34;
+    dic = defaultdict(int)
+    for _,i in all_patterns:
+        for _,_,pattern in i:
+            dic[tuple(pattern)]+=1
+    return [a[0] for a in sorted([(k,v) for k,v in dic.items()], key = lambda x: x[1], reverse=True)[:20]]</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="measurer.add_to_col" href="#measurer.add_to_col">add_to_col</a></code></li>
+<li><code><a title="measurer.compute_features" href="#measurer.compute_features">compute_features</a></code></li>
+<li><code><a title="measurer.couples_per_sentences" href="#measurer.couples_per_sentences">couples_per_sentences</a></code></li>
+<li><code><a title="measurer.find_all_patterns" href="#measurer.find_all_patterns">find_all_patterns</a></code></li>
+<li><code><a title="measurer.find_candidats" href="#measurer.find_candidats">find_candidats</a></code></li>
+<li><code><a title="measurer.get_candidats_pattern_frequency" href="#measurer.get_candidats_pattern_frequency">get_candidats_pattern_frequency</a></code></li>
+<li><code><a title="measurer.get_features" href="#measurer.get_features">get_features</a></code></li>
+<li><code><a title="measurer.get_most_frequent_patterns" href="#measurer.get_most_frequent_patterns">get_most_frequent_patterns</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.6.3</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

@@ -1,13 +1,17 @@
 import pandas as pd
 import measurer
 from codecs import encode
-from utilities import drive_cached, cos_similarities
+import utilities
 from lsa import LSA
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import cohen_kappa_score, recall_score, f1_score, precision_score, precision_recall_curve
 import seaborn as sns
 import matplotlib.pyplot as plt
+import sys
+import re
+import argparse
+import cupter
 
 
 
@@ -16,11 +20,12 @@ TRAIN_DIR = 'Train'
 TEST_DIR = 'Test'
 CORPUS_DIR = 'Corpus'
 TEMP_DIR = 'temp'
-SAVE_DIR = 'Save'
+SAVE_DIR = utilities.SAVE_DIR()
 DEV_DIR = "Dev"
 
-#ORDER 1_1
-def fetch_regular_features(corpus_dir_path : str ) -> (
+
+#TODOC
+def fetch_regular_features(corpus_dir_path : str, reset=False ) -> (
 	pd.DataFrame, pd.DataFrame, pd.DataFrame):
 	"""
 	FR : Récupère les mesures standards tel que les probabilités, distances, patron syntaxique
@@ -32,6 +37,8 @@ def fetch_regular_features(corpus_dir_path : str ) -> (
 	corpus_dir_path : str\n
 		FR : Emplacement du corpus\n
 		EN : The corpus path\n
+	reset : bool\n
+		#TODOC
 	Returns
 	-------
 	features : DataFrame\n
@@ -48,17 +55,19 @@ def fetch_regular_features(corpus_dir_path : str ) -> (
 	"""
 	corpus_id = encode(str.encode(corpus_dir_path), 'hex').decode()+'.pkl'
 	
-	get_features = drive_cached(measurer.get_features, 'features'+corpus_id)
+	get_features = utilities.drive_cached_func(measurer.get_features, 'features'+corpus_id, reset)
 	features = get_features(corpus_dir_path)
 
-	patron = measurer.get_candidats_pattern_frequency(corpus_dir_path)
-	features = pd.merge(features, patron, how = 'left', left_index=True, right_index=True).fillna(0)
+	get_pattern_frequency = utilities.drive_cached_func(
+		measurer.get_candidats_pattern_frequency, 'patterns'+corpus_id, reset)
+	patterns = get_pattern_frequency(corpus_dir_path)
+	features = pd.merge(features, patterns, how = 'left', left_index=True, right_index=True).fillna(0)
 	
 	tmp = LSA(corpus_dir_path)
 	lsa = pd.DataFrame(tmp.lsa, index= tmp.word_id)
 	lsa.columns.name = 'WORD'
 
-	exps_lsa = drive_cached(tmp,'exps'+corpus_id)(features)
+	exps_lsa = utilities.drive_cached_func(tmp,'exps'+corpus_id, reset)(features)
 
 	lsa_noun = pd.merge(features, lsa, how='left', left_on='NOUN', right_index=True).iloc[:,-100:].fillna(0)
 	lsa_verb = pd.merge(features, lsa, how='left', left_on='VERB', right_index=True).iloc[:,-100:].fillna(0)
@@ -69,7 +78,7 @@ def fetch_regular_features(corpus_dir_path : str ) -> (
 	
 	features = pd.merge(features, len_v, left_index=True, right_index=True)
 	features = pd.merge(features, len_n, left_index=True, right_index=True)
-	dist_noun = pd.DataFrame(cos_similarities(
+	dist_noun = pd.DataFrame(utilities.cos_similarities(
 		exps_lsa.loc(axis=0)[lsa_noun.index].fillna(0).sort_index().values,
 		lsa_noun.sort_index().values
 	), index=lsa_noun.sort_index().index)
@@ -77,7 +86,7 @@ def fetch_regular_features(corpus_dir_path : str ) -> (
 	dist_noun.columns = ['dist_noun']
 	features = pd.merge(features, dist_noun, left_index=True, right_index=True)
 	# TODO replace loc with reindex
-	dist_verb = pd.DataFrame(cos_similarities(
+	dist_verb = pd.DataFrame(utilities.cos_similarities(
 		exps_lsa.loc(axis=0)[lsa_verb.index].fillna(0).sort_index().values,
 		lsa_verb.sort_index().values
 	), index=lsa_verb.sort_index().index)
@@ -91,9 +100,12 @@ def fetch_regular_features(corpus_dir_path : str ) -> (
 	return features, lsa_noun, lsa_verb, exps_lsa
 
 
-#ORDER 1_2
-#ORDER 1_5
-def fetch_annotated_candidates(annotated_corpus_dir_path :str, truth_file_path : str, features : pd.DataFrame
+#TODOC
+def fetch_predictable_candidates(corpus_dir_path : str, features : pd.DataFrame):
+	return features.reindex(measurer.find_candidats(corpus_dir_path).index).dropna()
+	
+
+def fetch_annotated_candidates(annotated_corpus_dir_path :str, features : pd.DataFrame
 	) -> (pd.DataFrame, pd.DataFrame):
 	"""
 	FR : Recupère parmis les candidats ceux qui apparraisent dans corpus annoté\n
@@ -103,9 +115,6 @@ def fetch_annotated_candidates(annotated_corpus_dir_path :str, truth_file_path :
 	annotated_corpus_dir_path : str\n
 		FR : Emplacement du corpus annoté\n
 		EN : The annotated corpus path\n
-	truth_file_path : str\n
-		FR : Emplacement du fichier contenant les expressions annoté du corpus annoté\n
-		EN : Path of the file containing the expressions of the annotated corpus\n
 	features : str\n
 		FR : Tableau des candidats et leurs mesures\n
 		EN : Table of the candidtas and their features\n
@@ -118,31 +127,18 @@ def fetch_annotated_candidates(annotated_corpus_dir_path :str, truth_file_path :
 		FR : Tableau des candidats restant et leur annotation\n
 		EN : Table of the selected candidats and their annotation\n
 	"""
-	c = features.loc[measurer.find_candidats(annotated_corpus_dir_path).index].dropna()
+	predictable_candidates = fetch_predictable_candidates(annotated_corpus_dir_path, features)
 
-	#TODO automate truth
-	truth = pd.read_csv(truth_file_path, encoding='utf-8')
-	truth = truth.set_index(['NOUN', 'VERB']).assign(isLVC='YES')
-	features = pd.merge(c, truth, how='left', left_index= True, right_index= True).fillna('NO')
+	truth = cupter.get_LVCs(annotated_corpus_dir_path).assign(isLVC='YES')
+	features = pd.merge(predictable_candidates, truth, how='left', left_index= True, right_index= True).fillna('NO')
 	y = features[['isLVC']]
-	X = features.drop(['isLVC'], 1)
+	X = features.drop(['isLVC'], axis=1)
 	return X,y
 
 
 
-
-
-# TODO custom KFold in order to skew the data
-class custom_KFold():
-	def __init__(n_splits=2, ratio= 0.5):
-		self.n_splits=n_splits
-		self.ratio=ratio
-	def split(X, y):
-		return 
-
-#TODO RENAME
+#TODO Find a better name
 class custom_classifier():
-	#ORDER 1_3
 	def __init__(self, lsa_noun : pd.DataFrame, lsa_verb : pd.DataFrame, exps_lsa : pd.DataFrame):
 		"""
 		Params
@@ -154,13 +150,11 @@ class custom_classifier():
 			FR : Tableau des candidats et du vecteur de leur verbe\n
 			EN : Table of the candidats and their verb vector\n
 		exps_lsa : DataFrame\n
-			FR : #TODO
-			EN :
+			#TODOC
 		"""
 		self.lsa_noun = lsa_noun
 		self.lsa_verb = lsa_verb
 		self.exps_lsa = exps_lsa
-	#ORDER 1_4
 	def fit(self, X : pd.DataFrame, y : pd.DataFrame):
 		"""
 		FR : Entraine le modèle de prédiction\n
@@ -198,8 +192,7 @@ class custom_classifier():
 		X_tmp = shufling.drop(['isLVC'], 1)
 
 		self.classifier.fit(X_tmp, y_tmp['isLVC'])
-	#ORDER 1_4_1
-	#ORDER 1_6_1
+		return self
 	def compute_average_vector_features(self, X : pd.DataFrame) -> pd.DataFrame:
 		"""
 		FR : Calcul pour chaque candidats des mesures en rapport à la distance entre les
@@ -224,7 +217,7 @@ class custom_classifier():
 		)[0], index=self.lsa_noun.index)
 		tmp.columns= ['noun']
 		X_tmp = pd.merge(X, tmp, left_index=True, right_index=True)
-		
+
 		tmp = pd.DataFrame(
 		cosine_similarity(
 				self.verb_vec
@@ -240,9 +233,7 @@ class custom_classifier():
 		)[0], index=self.exps_lsa.index)
 		tmp.columns= ['exp']
 		X_tmp = pd.merge(X_tmp, tmp, left_index=True, right_index=True)
-
 		return X_tmp
-	#ORDER 1_6
 	def predict(self, X : pd.DataFrame) -> pd.DataFrame:
 		"""
 		FR : Prédit la classe des candidats fournie en X\n
@@ -261,53 +252,76 @@ class custom_classifier():
 		X = self.compute_average_vector_features(X)
 		return pd.DataFrame(self.classifier.predict(X), index=X.index)
 	def predict_proba(self, X):
+		#TODOC
 		X = self.compute_average_vector_features(X)
 		return pd.DataFrame(self.classifier.predict_proba(X), index=X.index, columns=self.classifier.classes_)
-	def predict_detailed(self, X):
-		res = self.predict_proba(X)
-	#TODO predict threshold
 
-def main():
-	#ORDER 1
-	features, lsa_noun, lsa_verb, exps_lsa = fetch_regular_features(TEMP_DIR)
-	
-	X_train, y_train = fetch_annotated_candidates(TRAIN_DIR, 'truth.csv',features)
-	classifier = custom_classifier(lsa_noun, lsa_verb, exps_lsa) #TODO save classifier
-	classifier.fit(X_train, y_train)
+class Manager():
+	#TODOC
+	def set_dir(self, corpus_dir, train_dir, test_dir, save_dir):
+		self.CORPUS_DIR = corpus_dir
+		self.TRAIN_DIR = train_dir
+		self.TEST_DIR = test_dir
+		self.SAVE_DIR = save_dir
+		utilities.SAVE_DIR.set(save_dir)
+	def train(self, reset_features = False, reset_classifier= False):
+		self.compute_features(reset_features)
+		self.fit(reset_classifier)
+	def compute_features(self, reset = False):
+		self.features, self.lsa_noun, self.lsa_verb, self.exps_lsa = fetch_regular_features(
+			self.CORPUS_DIR, reset)
+	def fit(self, reset=False):
+		def intern():
+			X_train, y_train = fetch_annotated_candidates(self.TRAIN_DIR, self.features)
+			classifier = custom_classifier(self.lsa_noun, self.lsa_verb, self.exps_lsa)
+			return classifier.fit(X_train, y_train), y_train
+		corpus_id = encode(str.encode(self.CORPUS_DIR+self.TRAIN_DIR), 'hex').decode()+'.pkl'
+		self.classifier, self.y_train = utilities.drive_cached_func(intern, 'classifier'+corpus_id, reset)()
+	def predict(self):
+		X_test = fetch_predictable_candidates(self.CORPUS_DIR, self.features)
+		return self.classifier.predict(X_test).drop(self.y_train.index).loc[lambda df : df[0] == 'YES']	
+	def evaluate(self):
+		X_test, y_test = fetch_annotated_candidates(self.TEST_DIR, self.features)
+		corpus_id = encode(str.encode(self.TEST_DIR), 'hex').decode()+'.pkl'
+		nb_tot = len(utilities.drive_cached_func(cupter.get_LVCs, 'truth'+corpus_id)(self.TEST_DIR))
+		nb_inter = len(y_test.loc[y_test['isLVC'] == 'YES'])
+		
+		res = self.classifier.predict(X_test)
+		a = pd.merge(y_test,res
+			, how='outer', left_index=True, right_index=True).loc[
+				lambda df : (df['isLVC'] == 'YES') | (df[0] == 'YES')
+			]
+		to_predict = pd.merge(self.y_train, y_test,
+				how='outer', left_index=True, right_index=True).drop('isLVC_x', axis= 1).drop(self.y_train.index).fillna('~')
+		a = pd.merge(res, to_predict
+			, how='inner', left_index=True, right_index=True)
+		print(a.loc[a['isLVC_y']== 'YES'])
+		conf_mat = a.assign(count=1).groupby([0, 'isLVC_y']).count()
+		print(conf_mat)
+		try :
+			print('r', conf_mat.loc[('YES','YES')] / (conf_mat.loc[('YES','YES')] + conf_mat.loc[('NO','YES')]))
+		except :
+			print('r', 0)
+		try :
+			print('p', conf_mat.loc[('YES','YES')] / (conf_mat.loc[('YES','YES')] + conf_mat.loc[('YES','NO')]))
+		except :
+			print('p', 0)
+		print('kappa', cohen_kappa_score(y_test.sort_index(), res.sort_index()))
+		r = recall_score(y_test.sort_index(),res.sort_index(), pos_label='YES')
+		p = precision_score(y_test.sort_index(), res.sort_index(), pos_label='YES')
+		print('precision', p)
+		print('recall',r)
+		print('f1', (2 * p * r) / (p + r))
+		true_r = r  * nb_inter / nb_tot
+		print('true recall', true_r)
+		print('true f1', (2 * p * true_r) / (p + true_r))
 
-	X_test, y_test = fetch_annotated_candidates(TEST_DIR, 'test_truth.csv', features)
-
-	res = classifier.predict(X_test)
-	nb_tot = len(pd.read_csv('test_truth.csv', encoding='utf-8'))
-	print(nb_tot)
-	nb_inter = len(y_test.loc[y_test['isLVC'] == 'YES'])
-	print(nb_inter)
-	print(res.loc[res[0] == 'YES'])
-	print(res.assign(count=1).groupby(0).count())
-	print('kappa', cohen_kappa_score(y_test.sort_index(), res.sort_index()))
-	# print('f1', f1_score(y_test.sort_index(),res.sort_index(),  pos_label='YES'))
-	# print('recall', recall_score(y_test.sort_index(),res.sort_index(), pos_label='YES'))
-	# print('precision', precision_score(y_test.sort_index(), res.sort_index(), pos_label='YES'))
-	r = recall_score(y_test.sort_index(),res.sort_index(), pos_label='YES')
-	p = precision_score(y_test.sort_index(), res.sort_index(), pos_label='YES')
-	print('precision', p)
-	print('recall',r)
-	print('f1', (2 * p * r) / (p + r))
-	true_r = r  * nb_inter / nb_tot
-	print('true recall', true_r)
-	print('true f1', (2 * p * true_r) / (p + true_r))
-
-	if True :
-		pd.DataFrame(zip(
-			classifier.compute_average_vector_features(X_train).columns,
-			classifier.classifier.feature_importances_)
-		).set_index(0).sort_values(1).plot.pie(y=1, legend=False)
-	else :
 		precision, recall, threshold = precision_recall_curve(
-				y_test.sort_index(), classifier.predict_proba(X_test)['YES'].sort_index(), pos_label='YES')
+				y_test.sort_index(), self.classifier.predict_proba(X_test)['YES'].sort_index(), pos_label='YES')
 		f1 = [(2 * p * r) / (p + r) if p+r > 0 else 0 for p, r in zip(precision, recall)]
 		true_recall = [r * nb_inter / nb_tot for r in recall]
 		true_f1 = [(2 * p * r) / (p + r) if p+r > 0 else 0 for p, r in zip(precision, true_recall)]
+		plt.subplot(1,1,1)
 		sns.set_style('whitegrid')
 		sns.lineplot(x="x", y="y", data=pd.DataFrame(zip(precision, threshold), columns=['y','x'])
 		, label='precision')
@@ -319,10 +333,50 @@ def main():
 		, label='true recall')
 		sns.lineplot(x="x", y="y", data=pd.DataFrame(zip(true_f1, threshold), columns=['y','x'])
 		, label='true f1')
-		
-	plt.show()
+		try : 
+			pd.DataFrame(zip(
+				self.classifier.compute_average_vector_features(X_test).columns,
+				self.classifier.classifier.feature_importances_)
+			).set_index(0).sort_values(1).plot.pie(y=1, legend=False)
+		except :
+			pass
+		plt.show()
 
 
-		
+def nothing(*args, **kwargs):
+	pass
 
-main()
+def something():
+	print('a')
+
+
+
+
+
+if __name__ == '__main__' :		
+	manager = Manager()
+	parser = argparse.ArgumentParser()
+	parser.add_argument('-reset', dest='reset', nargs='+',
+		choices=['features', 'classifier', 'full'], default=[])
+	# parser.add_argument('-train', dest='train',
+	# 	action='store_const', const=manager.train, default=nothing)
+	parser.add_argument('-predict', dest='predict',
+		action='store_const', const=manager.predict, default=nothing)
+	parser.add_argument('-eval', dest='evaluate',
+		action='store_const', const=manager.evaluate, default=nothing)
+	parser.add_argument('-corpus_dir', default=DEV_DIR)
+	parser.add_argument('-train_dir', default=TRAIN_DIR)
+	parser.add_argument('-test_dir', default=TEST_DIR)
+	parser.add_argument('-save_dir', default=SAVE_DIR)
+	
+	args = parser.parse_args()
+	if 'full' in args.reset:
+		utilities.clear()
+	manager.set_dir(args.corpus_dir, args.train_dir, args.test_dir, args.save_dir)
+	manager.train('features' in args.reset, 'classifier' in args.reset)
+	pred = args.predict()
+	if pred is not None: print(pred)
+	args.evaluate()
+	
+
+

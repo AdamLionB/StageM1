@@ -1,10 +1,18 @@
-from os import path
+from os import path, remove, listdir
 import pickle
 from time import time
 from numpy import dot
 from numpy.linalg import norm
 
-SAVE_DIR = 'Save'
+
+class var_holder():
+    def __init__(self, var):
+        self.var = var
+    def __call__(self):
+        return self.var
+    def set(self, var):
+        self.var = var
+SAVE_DIR = var_holder('Save')
 
 # TODOC
 def timed(func):
@@ -33,12 +41,12 @@ def saved(to_save, file_name):
         FR : L'objet fourni en entré\n
         EN : The given object\n
     """
-    file_path = path.join(SAVE_DIR, file_name)
+    file_path = path.join(SAVE_DIR(), file_name)
     with open(file_path, 'wb') as output:
         pickle.dump(to_save, output)
     return to_save
 
-def drive_cached(func, file_name):
+def drive_cached_func(func, file_name, reset=False):
     """
     FR : Décore une fonction afin d'enregistrer son résultat, ou de le charger si celui-ci
     à déjà était enregistré.\n
@@ -73,18 +81,36 @@ def drive_cached(func, file_name):
     True
     """
     def intern(*args, **kwargs):
-        file_path = path.join(SAVE_DIR, file_name)
-        if path.isfile(file_path) :
-            with open(file_path, 'rb') as file:
-                return pickle.load(file)
+        file_path = path.join(SAVE_DIR(), file_name)
+        if path.isfile(file_path):
+            if reset :
+                remove(file_path)
+                res = func(*args, **kwargs)
+            else :
+                with open(file_path, 'rb') as file:
+                    return pickle.load(file)
         else :
             res = func(*args, **kwargs)
         return saved(res, file_name)
     return intern
 
+
+
+def clear():
+    for file_name in listdir(SAVE_DIR()):
+        file_path = path.join(SAVE_DIR(), file_name)
+        if path.isfile(file_path):
+            remove(file_path)
+    
+
 # TODOC
 def cos_similarity(a, b):
-    return dot(a, b)/(norm(a)*norm(b))
+    norm_a = norm(a)
+    norm_b = norm(b)
+    if norm_a == 0 or norm_b == 0:
+        return 0
+    return dot(a, b)/(norm_a*norm_b)
+    
 # TODOC
 def cos_similarities(A,B):
     return [cos_similarity(a,b) for a,b in zip(A,B)]

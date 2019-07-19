@@ -6,7 +6,7 @@ from scipy.sparse import coo_matrix
 from sklearn.decomposition import TruncatedSVD
 from codecs import encode
 import pandas as pd
-from utilities import drive_cached
+from utilities import drive_cached_func
 
 SAVE_DIR = 'Save'
 
@@ -314,17 +314,17 @@ class LSA():
         """
         """
         self.id =encode(str.encode(corpus_dir_path), 'hex').decode()+'.pkl'
-        cooc_dic = drive_cached(
+        cooc_dic = drive_cached_func(
             corpus_cooccurrences, 
             'coocs'+self.id
         )(corpus_dir_path)
         self.cooc_mat, self.word_id, self.sums = dic_to_mat(cooc_dic)
         self.id_word = {v : k for k,v in self.word_id.items()}
         self.svd = TruncatedSVD(n_components=100, n_iter=7, random_state=42)
-        self.svd = drive_cached(self.svd.fit,
+        self.svd = drive_cached_func(self.svd.fit,
             'svd'+self.id
         )(self.cooc_mat)
-        self.lsa = drive_cached(self.svd.transform,
+        self.lsa = drive_cached_func(self.svd.transform,
             'lsa'+self.id
         )(self.cooc_mat)
         self.exps_cooc = cached_expressions_cooccurrences(corpus_dir_path)
@@ -334,7 +334,6 @@ class LSA():
     def save_cache(self):
         """
         """
-        print('cooc_cache'+self.id)
         self.exps_cooc.save_cache('cooc_cache'+self.id)
         self.exps.save_cache('vec_cache'+self.id)
     # ORDER 1_1_5_0
@@ -342,7 +341,6 @@ class LSA():
     def load_cache(self):
         """
         """
-        print('cooc_cache'+self.id)
         self.exps_cooc.load_cache('cooc_cache'+self.id)
         self.exps.load_cache('vec_cache'+self.id)
     #ORDER 1_1_5

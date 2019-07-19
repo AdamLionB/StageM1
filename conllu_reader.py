@@ -8,7 +8,7 @@ prefix_len = len('# text = ')
 
 
 #TODOC 
-def file_batcher(file : 'Iterator'  , batch_size : int):
+def file_batcher(file : 'Iterator' , batch_size : int):
     """
     FR : Format le contenue du fichier CoNLL en  Dataframes contenants chacune au maxium
     'batch_size' phrases, 

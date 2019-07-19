@@ -1,0 +1,1074 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.6.3" />
+<title>lsa API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase;cursor:pointer}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>lsa</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">from conllu_reader import corpus_batcher
+from collections import defaultdict
+import pickle
+from os import path
+from scipy.sparse import coo_matrix
+from sklearn.decomposition import TruncatedSVD
+from codecs import encode
+import pandas as pd
+from utilities import drive_cached_func
+
+SAVE_DIR = &#39;Save&#39;
+
+#ORDER 1_1_4_1
+def corpus_cooccurrences(corpus_dir_path):
+    &#34;&#34;&#34;
+    FR : Compte les cooccurrences entre paires de mots dans le corpus donné 
+    et les retournes sous forme de dict.\n
+    EN : Count the cooccurrences between pair of words in the given corpus and return the in a dict.\n
+    Parameters
+    ----------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    Returns
+    -------
+    cooc_dic : dic{word1 : str , cooc : dic{word2 : str , nb_cooc_word1_word2 : int}}\n
+        FR : Dictionnaire contenant les paire toutes les paires de mots rencontrées dans le corpus
+        ainsi que leur nombre d&#39;occurences respectives.\n
+        EN : Dictionary with all the pair of word seen in the corpus
+        and the number of time each pair has been sighted.\n
+    &#34;&#34;&#34;
+    cooc_dic = defaultdict(lambda : defaultdict(int))
+    sid = 0 # Id de la phrase
+    sentence_first_word_id = 0 
+    for data, sentences in corpus_batcher(corpus_dir_path):
+        del sentences
+        # Transforme la DataFrame en matrice numpy pour optimiser la lecture iterrative
+        data = data[[&#39;Lemma&#39;]].reset_index().to_numpy()
+        for n,row in enumerate(data):
+            # parcour tout les mots de la phrase avant le mot actuel (n)
+            for a in data[sentence_first_word_id:n]:
+                cooc_dic[row[2]][a[2]]+=1
+                cooc_dic[a[2]][row[2]]+=1
+            # met à jour l&#39;id du premier mot de la phrase lorsque l&#39;on change de phrase
+            if sid != row[0] : 
+                sid = row[0]
+                sentence_first_word_id = n
+    return {word1 : {word2 : count for word2, count in dic.items()} for word1, dic in cooc_dic.items()}
+
+# ORDER 1_1_4_2
+def dic_to_mat(cooc_dic):
+    &#34;&#34;&#34;
+    FR : Transforme un dictionnaire de cooccurrences en une matrices creuse de coccurrences\n
+    EN : Transform a cocccurrences dictionary into a cooccurrences sparse matrix\n
+    Parameters
+    ----------
+    cooc_dic : dic{word1 : str , cooc : dic{word2 : str , nb_cooc_word1_word2 : int}}\n
+        FR : Dictionnaire contenant les paire toutes les paires de mots rencontrées dans le corpus
+        ainsi que leur nombre d&#39;occurences respectives.\n
+        EN : Dictionary with all the pair of word seen in the corpus
+        and the number of time each pair has been sighted.\n
+    Returns
+    -------
+    cooc_mat : Sparse Matrix\n
+        FR : Matrice de cooccurrence représentant les mêmes données que le dictionnaire fourni
+        en entré.\n
+        EN : Cooccurrences matrix representing the same data as the dictionnary given.\n
+    &#34;&#34;&#34;
+    data, i, j = [] , [], []
+    n = 0
+    voc = {}
+    sums = {k : sum(v.values()) for k,v in cooc_dic.items()}
+    for k, v in cooc_dic.items():
+        if True:
+            if voc.setdefault(k, n) == n: n+=1
+            for l, w in v.items():
+                if voc.setdefault(l, n) == n : n+=1
+                i.append(voc[k])
+                j.append(voc[l])
+                data.append(w / sums[l])
+    return coo_matrix((data, (i, j))).tocsr(), voc, sums
+
+#ORDER 1_1_5_1_1_1
+def expressions_cooccurrences(corpus_dir_path, expressions):
+    &#34;&#34;&#34;
+    FR : Compte les cooccurrences entre les expressions fournies en entré et les mots du corpus.\n
+    EN : Count cooccurrences between the given expressions and corpus&#39; words.\n
+    Parameters
+    ----------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    expressions : list&lt;(str,str)&gt;\n
+        FR : liste des expressions dont on veut les coccurrences\n
+        EN : list of the expressions of which we want the coccurrences\n
+    Returns
+    -------
+    exp_dic : dic{exp : (noun : str,verb : str) , cooc : dic{word : str , nb_cooc_exp_word : int}}\n
+        FR : Dictionnaire contenant pour chaque expression les mots avec lequelles celle-ci
+        cooccurre ainsi que le nombre de coccurences respective\n
+        EN : Dictionary with, for each expression, the word cooccurring with said expression and
+        the number of cooccurrence
+    &#34;&#34;&#34;
+    cooc_dic = defaultdict(lambda : defaultdict(int))
+    if expressions == []: return cooc_dic
+    last_word_sid = 0
+    for data, sentences in corpus_batcher(corpus_dir_path):
+        data = data.reset_index().to_numpy()
+        word_occurrences = defaultdict(int)
+        verbs = defaultdict(lambda :-1)
+        nouns = defaultdict(lambda :-2)
+        for n,end_row in enumerate(data):
+            if last_word_sid != end_row[0] :
+                if len(verbs) != 0 and len(nouns) != 0:
+                    for expression in expressions:
+                        if verbs[expression] == nouns[expression]:
+                            for word, occurences in word_occurrences.items():
+                                if word not in expression:
+                                    cooc_dic[expression][word] += occurences#*C[exp]
+                word_occurrences = defaultdict(int)
+                verbs = defaultdict(lambda :-1)
+                nouns = defaultdict(lambda :-2)
+                last_word_sid = end_row[0]
+            word_occurrences[end_row[3]]+=1
+            
+            if end_row[4] == &#39;NOUN&#39;:
+                for expression in expressions:
+                    if end_row[3] == expression[1]:
+                        nouns[expression] = end_row[7]
+            if end_row[4] == &#39;VERB&#39;:
+                for expression in expressions:
+                    if end_row[3] == expression[0]:
+                        verbs[expression] = end_row[1]
+    return cooc_dic
+
+# ORDER 1_1_5_1_2
+# TODOC
+def dic_to_vec(expressions, voc, sums):
+    &#34;&#34;&#34;
+    FR : \n
+    EN : \n
+    Parameters
+    ----------
+    
+    Returns
+    -------
+    
+    &#34;&#34;&#34;
+    data = []
+    i = []
+    j = []
+    left = dict(voc)
+    #here
+    for n, (exp, cooc) in enumerate(expressions.items()):
+        for word, cooccurrences in cooc.items():
+            if word in left : left.pop(word)
+            j.append(voc[word])
+            i.append(n)
+            if sums[word] == 0 or cooccurrences == 0:
+                data.append(0)
+            else:
+                data.append((cooccurrences / sums[word]))# (np.log(len(sums) / y))) 
+        if len(left) != 0:
+            j.append(max(left.values()))
+            i.append(n)
+            data.append(0)
+    return coo_matrix((data, (i, j)))
+
+class cached_expressions_cooccurrences:
+    &#34;&#34;&#34;
+    FR : Objet appelable (une fois initialisé, l&#39;objet peut être appeler comme une fonction)
+    comptant les cooccurrences d&#39;une liste d&#39;expressions avec le reste des mots du corpus\n
+    EN : Callable object (once initialized, it can be called the same way a function does)
+    counting the cooccurrences between a list of expressions and the words of the corpus.\n
+    &#34;&#34;&#34;
+    #ORDER 1_1_4_3
+    def __init__(self, corpus_dir_path):
+        &#34;&#34;&#34;
+        Params
+        ------
+        corpus_dir_path : str\n
+            FR : Emplacement du corpus\n
+            EN : The corpus path\n
+        &#34;&#34;&#34;
+        self.cache = {}
+        self.corpus_dir_path = corpus_dir_path
+    #ORDER 1_1_5_1_1
+    def __call__(self, expressions):
+        &#34;&#34;&#34;
+        FR : Compte ou retrouve le nombre de cooccurrences entre les expressions et
+        les mots du corpus.\n
+        EN : Count or retrieve the number of cooccurrences between the expressions 
+        and the corpus&#39; words\n
+        Params
+        ------
+        expressions : list&lt;(str,str)&gt;\n
+            FR : liste des expressions dont on veut les coccurrences\n
+            EN : list of the expressions of which we want the coccurrences\n
+        Returns
+        -------
+        exp_dic : dic{exp : (noun : str,verb : str) , cooc : dic{word : str , nb_cooc_exp_word : int}}\n
+            FR : Dictionnaire contenant pour chaque expression les mots avec lequelles celle-ci
+            cooccurre ainsi que le nombre de coccurences respective\n
+            EN : Dictionary with, for each expression, the word cooccurring with said expression and
+            the number of cooccurrence
+        See also
+        --------
+        expressions_cooccurrences
+        &#34;&#34;&#34;
+        # TODO rename abunchastuff
+        list_exp2 = [ex for ex in expressions if ex not in self.cache]
+        e = expressions_cooccurrences(self.corpus_dir_path, list_exp2)
+        for ex in list_exp2:
+            self.cache[ex] = {k: v for k,v in e[ex].items()}
+        return {ex : self.cache[ex] for ex in expressions}
+    # ORDER 1_1_5_3_1
+    def save_cache(self, name):
+        &#34;&#34;&#34;
+        FR : Enregistre le cache dans un fichier.\n
+        EN : SAve the cache in a file.\n
+        Params
+        ------
+        name : str\n
+            FR : nom sous lequel on désire enregistrer le cache.\n
+            EN : name under which the cache is to be saved.\n
+        &#34;&#34;&#34;
+        with open(path.join(SAVE_DIR, name), &#39;wb&#39;) as file:
+            pickle.dump(self.cache, file)
+    # ORDER 1_1_5_0_1
+    def load_cache(self, name):
+        &#34;&#34;&#34;
+        FR : Charge le cache depuis un fichier.\n
+        EN : Load the cache from a file.\n
+        Params
+        ------
+        name : str\n
+            FR : nom sous lequel le cache est enregistré.\n
+            EN : name under which the cache is saved.\n
+        &#34;&#34;&#34;
+        file_path = path.join(SAVE_DIR, name)
+        if path.isfile(file_path) :
+            with open(file_path, &#39;rb&#39;) as file:
+                self.cache = pickle.load(file)
+
+class cached_expressions_vectors:
+    &#34;&#34;&#34;
+    FR : Objet appelable (une fois initialisé, l&#39;objet peut être appeler comme une fonction)
+    renvoyant la représentation vectoriel des coocurrences d&#39;une liste d&#39;expressions\n
+    EN : Callable object (once initialized, it can be called the same way a function does)
+    returning the vectorial reprensation of the cooccurrences of the given list of expressions.\n
+    &#34;&#34;&#34;
+    #ORDER 1_1_4_4 
+    #TODOC
+    def __init__(self, word_id, sums, svd, exps_cooc):
+        &#34;&#34;&#34;
+        Params
+        ------
+        word_id : dic{str -&gt; int}\n
+            FR : Dictionnaire des mots et leur id\n
+            EN : Dictionnary of the words and their id\n
+        sums : dic{str -&gt; int}
+            FR : 
+            EN :
+        svd :
+            FR :
+            EN :
+        exps_cooc:
+            FR :
+            EN :
+        &#34;&#34;&#34;
+        self.exps_cooc = exps_cooc
+        self.cache = {}
+        self.word_id = word_id
+        self.sums = sums
+        self.svd = svd
+    # TODO rename abuchastuff
+    #ORDER 1_1_5_1
+    #TODOC 
+    def __call__(self, list_exp):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        e = self.exps_cooc(list_exp)
+        list_exp2 = [ex for ex in list_exp if ex not in self.cache]
+        a = dic_to_vec(e, self.word_id, self.sums)
+        b = self.svd.transform(a)
+        for ex, c in zip(list_exp2, b):
+            self.cache[ex] = c
+        return [self.cache[ex] for ex in list_exp]
+    # ORDER 1_1_5_3_2
+    #TODOC
+    def save_cache(self, name):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        with open(path.join(SAVE_DIR, name), &#39;wb&#39;) as file:
+            pickle.dump(self.cache, file)
+    # ORDER 1_1_5_0_2
+    #TODOC
+    def load_cache(self, name):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        file_path = path.join(SAVE_DIR, name)
+        if path.isfile(file_path) :
+            with open(file_path, &#39;rb&#39;) as file:
+                self.cache = pickle.load(file)
+              
+
+# TODO change cache loading
+class LSA():
+    &#34;&#34;&#34;
+    &#34;&#34;&#34;
+    #ORDER 1_1_4
+    #TODOC
+    def __init__(self, corpus_dir_path):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        self.id =encode(str.encode(corpus_dir_path), &#39;hex&#39;).decode()+&#39;.pkl&#39;
+        cooc_dic = drive_cached_func(
+            corpus_cooccurrences, 
+            &#39;coocs&#39;+self.id
+        )(corpus_dir_path)
+        self.cooc_mat, self.word_id, self.sums = dic_to_mat(cooc_dic)
+        self.id_word = {v : k for k,v in self.word_id.items()}
+        self.svd = TruncatedSVD(n_components=100, n_iter=7, random_state=42)
+        self.svd = drive_cached_func(self.svd.fit,
+            &#39;svd&#39;+self.id
+        )(self.cooc_mat)
+        self.lsa = drive_cached_func(self.svd.transform,
+            &#39;lsa&#39;+self.id
+        )(self.cooc_mat)
+        self.exps_cooc = cached_expressions_cooccurrences(corpus_dir_path)
+        self.exps = cached_expressions_vectors(self.word_id,self.sums,self.svd, self.exps_cooc)
+    # ORDER 1_1_5_3
+    #TODOC
+    def save_cache(self):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        self.exps_cooc.save_cache(&#39;cooc_cache&#39;+self.id)
+        self.exps.save_cache(&#39;vec_cache&#39;+self.id)
+    # ORDER 1_1_5_0
+    #TODOC
+    def load_cache(self):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        self.exps_cooc.load_cache(&#39;cooc_cache&#39;+self.id)
+        self.exps.load_cache(&#39;vec_cache&#39;+self.id)
+    #ORDER 1_1_5
+    #TODOC
+    def __call__(self, candidats):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        expressions = [(v,n) for n,v in candidats.index.tolist()]
+        self.load_cache()
+        self.exps(expressions)
+        self.save_cache()
+        res = pd.DataFrame.from_dict(self.exps.cache, orient=&#39;index&#39;)
+        tmp = pd.DataFrame(res.reset_index()[&#39;index&#39;].tolist(), index= res.index, columns=[&#39;VERB&#39;, &#39;NOUN&#39;])
+        res = pd.merge(res, tmp, left_index=True, right_index=True).set_index([&#39;NOUN&#39;, &#39;VERB&#39;])
+        return res</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="lsa.corpus_cooccurrences"><code class="name flex">
+<span>def <span class="ident">corpus_cooccurrences</span></span>(<span>corpus_dir_path)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Compte les cooccurrences entre paires de mots dans le corpus donné
+et les retournes sous forme de dict.</p>
+<p>EN : Count the cooccurrences between pair of words in the given corpus and return the in a dict.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>corpus_dir_path</code></strong> :&ensp;<code>str</code></dt>
+<dd>
+<p>FR : Emplacement du corpus</p>
+<p>EN : The corpus path</p>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>cooc_dic</code></strong> :&ensp;<code>dic</code>{<code>word1</code> : <code>str</code> , <code>cooc</code> : <code>dic</code>{<code>word2</code> : <code>str</code> , <code>nb_cooc_word1_word2</code> : <code>int</code>}}</dt>
+<dd>
+<p>FR : Dictionnaire contenant les paire toutes les paires de mots rencontrées dans le corpus
+ainsi que leur nombre d'occurences respectives.</p>
+<p>EN : Dictionary with all the pair of word seen in the corpus
+and the number of time each pair has been sighted.</p>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def corpus_cooccurrences(corpus_dir_path):
+    &#34;&#34;&#34;
+    FR : Compte les cooccurrences entre paires de mots dans le corpus donné 
+    et les retournes sous forme de dict.\n
+    EN : Count the cooccurrences between pair of words in the given corpus and return the in a dict.\n
+    Parameters
+    ----------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    Returns
+    -------
+    cooc_dic : dic{word1 : str , cooc : dic{word2 : str , nb_cooc_word1_word2 : int}}\n
+        FR : Dictionnaire contenant les paire toutes les paires de mots rencontrées dans le corpus
+        ainsi que leur nombre d&#39;occurences respectives.\n
+        EN : Dictionary with all the pair of word seen in the corpus
+        and the number of time each pair has been sighted.\n
+    &#34;&#34;&#34;
+    cooc_dic = defaultdict(lambda : defaultdict(int))
+    sid = 0 # Id de la phrase
+    sentence_first_word_id = 0 
+    for data, sentences in corpus_batcher(corpus_dir_path):
+        del sentences
+        # Transforme la DataFrame en matrice numpy pour optimiser la lecture iterrative
+        data = data[[&#39;Lemma&#39;]].reset_index().to_numpy()
+        for n,row in enumerate(data):
+            # parcour tout les mots de la phrase avant le mot actuel (n)
+            for a in data[sentence_first_word_id:n]:
+                cooc_dic[row[2]][a[2]]+=1
+                cooc_dic[a[2]][row[2]]+=1
+            # met à jour l&#39;id du premier mot de la phrase lorsque l&#39;on change de phrase
+            if sid != row[0] : 
+                sid = row[0]
+                sentence_first_word_id = n
+    return {word1 : {word2 : count for word2, count in dic.items()} for word1, dic in cooc_dic.items()}</code></pre>
+</details>
+</dd>
+<dt id="lsa.dic_to_mat"><code class="name flex">
+<span>def <span class="ident">dic_to_mat</span></span>(<span>cooc_dic)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Transforme un dictionnaire de cooccurrences en une matrices creuse de coccurrences</p>
+<p>EN : Transform a cocccurrences dictionary into a cooccurrences sparse matrix</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>cooc_dic</code></strong> :&ensp;<code>dic</code>{<code>word1</code> : <code>str</code> , <code>cooc</code> : <code>dic</code>{<code>word2</code> : <code>str</code> , <code>nb_cooc_word1_word2</code> : <code>int</code>}}</dt>
+<dd>
+<p>FR : Dictionnaire contenant les paire toutes les paires de mots rencontrées dans le corpus
+ainsi que leur nombre d'occurences respectives.</p>
+<p>EN : Dictionary with all the pair of word seen in the corpus
+and the number of time each pair has been sighted.</p>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>cooc_mat</code></strong> :&ensp;<code>Sparse</code> <code>Matrix</code></dt>
+<dd>
+<p>FR : Matrice de cooccurrence représentant les mêmes données que le dictionnaire fourni
+en entré.</p>
+<p>EN : Cooccurrences matrix representing the same data as the dictionnary given.</p>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def dic_to_mat(cooc_dic):
+    &#34;&#34;&#34;
+    FR : Transforme un dictionnaire de cooccurrences en une matrices creuse de coccurrences\n
+    EN : Transform a cocccurrences dictionary into a cooccurrences sparse matrix\n
+    Parameters
+    ----------
+    cooc_dic : dic{word1 : str , cooc : dic{word2 : str , nb_cooc_word1_word2 : int}}\n
+        FR : Dictionnaire contenant les paire toutes les paires de mots rencontrées dans le corpus
+        ainsi que leur nombre d&#39;occurences respectives.\n
+        EN : Dictionary with all the pair of word seen in the corpus
+        and the number of time each pair has been sighted.\n
+    Returns
+    -------
+    cooc_mat : Sparse Matrix\n
+        FR : Matrice de cooccurrence représentant les mêmes données que le dictionnaire fourni
+        en entré.\n
+        EN : Cooccurrences matrix representing the same data as the dictionnary given.\n
+    &#34;&#34;&#34;
+    data, i, j = [] , [], []
+    n = 0
+    voc = {}
+    sums = {k : sum(v.values()) for k,v in cooc_dic.items()}
+    for k, v in cooc_dic.items():
+        if True:
+            if voc.setdefault(k, n) == n: n+=1
+            for l, w in v.items():
+                if voc.setdefault(l, n) == n : n+=1
+                i.append(voc[k])
+                j.append(voc[l])
+                data.append(w / sums[l])
+    return coo_matrix((data, (i, j))).tocsr(), voc, sums</code></pre>
+</details>
+</dd>
+<dt id="lsa.dic_to_vec"><code class="name flex">
+<span>def <span class="ident">dic_to_vec</span></span>(<span>expressions, voc, sums)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : </p>
+<p>EN : </p>
+<h2 id="parameters">Parameters</h2>
+<h2 id="returns">Returns</h2></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def dic_to_vec(expressions, voc, sums):
+    &#34;&#34;&#34;
+    FR : \n
+    EN : \n
+    Parameters
+    ----------
+    
+    Returns
+    -------
+    
+    &#34;&#34;&#34;
+    data = []
+    i = []
+    j = []
+    left = dict(voc)
+    #here
+    for n, (exp, cooc) in enumerate(expressions.items()):
+        for word, cooccurrences in cooc.items():
+            if word in left : left.pop(word)
+            j.append(voc[word])
+            i.append(n)
+            if sums[word] == 0 or cooccurrences == 0:
+                data.append(0)
+            else:
+                data.append((cooccurrences / sums[word]))# (np.log(len(sums) / y))) 
+        if len(left) != 0:
+            j.append(max(left.values()))
+            i.append(n)
+            data.append(0)
+    return coo_matrix((data, (i, j)))</code></pre>
+</details>
+</dd>
+<dt id="lsa.expressions_cooccurrences"><code class="name flex">
+<span>def <span class="ident">expressions_cooccurrences</span></span>(<span>corpus_dir_path, expressions)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Compte les cooccurrences entre les expressions fournies en entré et les mots du corpus.</p>
+<p>EN : Count cooccurrences between the given expressions and corpus' words.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>corpus_dir_path</code></strong> :&ensp;<code>str</code></dt>
+<dd>
+<p>FR : Emplacement du corpus</p>
+<p>EN : The corpus path</p>
+</dd>
+<dt><strong><code>expressions</code></strong> :&ensp;<code>list</code>&lt;(<code>str</code>,<code>str</code>)&gt;</dt>
+<dd>
+<p>FR : liste des expressions dont on veut les coccurrences</p>
+<p>EN : list of the expressions of which we want the coccurrences</p>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>exp_dic</code></strong> :&ensp;<code>dic</code>{<code>exp</code> : (<code>noun</code> : <code>str</code>,<code>verb</code> : <code>str</code>) , <code>cooc</code> : <code>dic</code>{<code>word</code> : <code>str</code> , <code>nb_cooc_exp_word</code> : <code>int</code>}}</dt>
+<dd>
+<p>FR : Dictionnaire contenant pour chaque expression les mots avec lequelles celle-ci
+cooccurre ainsi que le nombre de coccurences respective</p>
+<p>EN : Dictionary with, for each expression, the word cooccurring with said expression and
+the number of cooccurrence</p>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def expressions_cooccurrences(corpus_dir_path, expressions):
+    &#34;&#34;&#34;
+    FR : Compte les cooccurrences entre les expressions fournies en entré et les mots du corpus.\n
+    EN : Count cooccurrences between the given expressions and corpus&#39; words.\n
+    Parameters
+    ----------
+    corpus_dir_path : str\n
+        FR : Emplacement du corpus\n
+        EN : The corpus path\n
+    expressions : list&lt;(str,str)&gt;\n
+        FR : liste des expressions dont on veut les coccurrences\n
+        EN : list of the expressions of which we want the coccurrences\n
+    Returns
+    -------
+    exp_dic : dic{exp : (noun : str,verb : str) , cooc : dic{word : str , nb_cooc_exp_word : int}}\n
+        FR : Dictionnaire contenant pour chaque expression les mots avec lequelles celle-ci
+        cooccurre ainsi que le nombre de coccurences respective\n
+        EN : Dictionary with, for each expression, the word cooccurring with said expression and
+        the number of cooccurrence
+    &#34;&#34;&#34;
+    cooc_dic = defaultdict(lambda : defaultdict(int))
+    if expressions == []: return cooc_dic
+    last_word_sid = 0
+    for data, sentences in corpus_batcher(corpus_dir_path):
+        data = data.reset_index().to_numpy()
+        word_occurrences = defaultdict(int)
+        verbs = defaultdict(lambda :-1)
+        nouns = defaultdict(lambda :-2)
+        for n,end_row in enumerate(data):
+            if last_word_sid != end_row[0] :
+                if len(verbs) != 0 and len(nouns) != 0:
+                    for expression in expressions:
+                        if verbs[expression] == nouns[expression]:
+                            for word, occurences in word_occurrences.items():
+                                if word not in expression:
+                                    cooc_dic[expression][word] += occurences#*C[exp]
+                word_occurrences = defaultdict(int)
+                verbs = defaultdict(lambda :-1)
+                nouns = defaultdict(lambda :-2)
+                last_word_sid = end_row[0]
+            word_occurrences[end_row[3]]+=1
+            
+            if end_row[4] == &#39;NOUN&#39;:
+                for expression in expressions:
+                    if end_row[3] == expression[1]:
+                        nouns[expression] = end_row[7]
+            if end_row[4] == &#39;VERB&#39;:
+                for expression in expressions:
+                    if end_row[3] == expression[0]:
+                        verbs[expression] = end_row[1]
+    return cooc_dic</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="lsa.LSA"><code class="flex name class">
+<span>class <span class="ident">LSA</span></span>
+<span>(</span><span>corpus_dir_path)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">class LSA():
+    &#34;&#34;&#34;
+    &#34;&#34;&#34;
+    #ORDER 1_1_4
+    #TODOC
+    def __init__(self, corpus_dir_path):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        self.id =encode(str.encode(corpus_dir_path), &#39;hex&#39;).decode()+&#39;.pkl&#39;
+        cooc_dic = drive_cached_func(
+            corpus_cooccurrences, 
+            &#39;coocs&#39;+self.id
+        )(corpus_dir_path)
+        self.cooc_mat, self.word_id, self.sums = dic_to_mat(cooc_dic)
+        self.id_word = {v : k for k,v in self.word_id.items()}
+        self.svd = TruncatedSVD(n_components=100, n_iter=7, random_state=42)
+        self.svd = drive_cached_func(self.svd.fit,
+            &#39;svd&#39;+self.id
+        )(self.cooc_mat)
+        self.lsa = drive_cached_func(self.svd.transform,
+            &#39;lsa&#39;+self.id
+        )(self.cooc_mat)
+        self.exps_cooc = cached_expressions_cooccurrences(corpus_dir_path)
+        self.exps = cached_expressions_vectors(self.word_id,self.sums,self.svd, self.exps_cooc)
+    # ORDER 1_1_5_3
+    #TODOC
+    def save_cache(self):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        self.exps_cooc.save_cache(&#39;cooc_cache&#39;+self.id)
+        self.exps.save_cache(&#39;vec_cache&#39;+self.id)
+    # ORDER 1_1_5_0
+    #TODOC
+    def load_cache(self):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        self.exps_cooc.load_cache(&#39;cooc_cache&#39;+self.id)
+        self.exps.load_cache(&#39;vec_cache&#39;+self.id)
+    #ORDER 1_1_5
+    #TODOC
+    def __call__(self, candidats):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        expressions = [(v,n) for n,v in candidats.index.tolist()]
+        self.load_cache()
+        self.exps(expressions)
+        self.save_cache()
+        res = pd.DataFrame.from_dict(self.exps.cache, orient=&#39;index&#39;)
+        tmp = pd.DataFrame(res.reset_index()[&#39;index&#39;].tolist(), index= res.index, columns=[&#39;VERB&#39;, &#39;NOUN&#39;])
+        res = pd.merge(res, tmp, left_index=True, right_index=True).set_index([&#39;NOUN&#39;, &#39;VERB&#39;])
+        return res</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="lsa.LSA.load_cache"><code class="name flex">
+<span>def <span class="ident">load_cache</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def load_cache(self):
+    &#34;&#34;&#34;
+    &#34;&#34;&#34;
+    self.exps_cooc.load_cache(&#39;cooc_cache&#39;+self.id)
+    self.exps.load_cache(&#39;vec_cache&#39;+self.id)</code></pre>
+</details>
+</dd>
+<dt id="lsa.LSA.save_cache"><code class="name flex">
+<span>def <span class="ident">save_cache</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def save_cache(self):
+    &#34;&#34;&#34;
+    &#34;&#34;&#34;
+    self.exps_cooc.save_cache(&#39;cooc_cache&#39;+self.id)
+    self.exps.save_cache(&#39;vec_cache&#39;+self.id)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="lsa.cached_expressions_cooccurrences"><code class="flex name class">
+<span>class <span class="ident">cached_expressions_cooccurrences</span></span>
+<span>(</span><span>corpus_dir_path)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Objet appelable (une fois initialisé, l'objet peut être appeler comme une fonction)
+comptant les cooccurrences d'une liste d'expressions avec le reste des mots du corpus</p>
+<p>EN : Callable object (once initialized, it can be called the same way a function does)
+counting the cooccurrences between a list of expressions and the words of the corpus.</p>
+<h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>corpus_dir_path</code></strong> :&ensp;<code>str</code></dt>
+<dd>
+<p>FR : Emplacement du corpus</p>
+<p>EN : The corpus path</p>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">class cached_expressions_cooccurrences:
+    &#34;&#34;&#34;
+    FR : Objet appelable (une fois initialisé, l&#39;objet peut être appeler comme une fonction)
+    comptant les cooccurrences d&#39;une liste d&#39;expressions avec le reste des mots du corpus\n
+    EN : Callable object (once initialized, it can be called the same way a function does)
+    counting the cooccurrences between a list of expressions and the words of the corpus.\n
+    &#34;&#34;&#34;
+    #ORDER 1_1_4_3
+    def __init__(self, corpus_dir_path):
+        &#34;&#34;&#34;
+        Params
+        ------
+        corpus_dir_path : str\n
+            FR : Emplacement du corpus\n
+            EN : The corpus path\n
+        &#34;&#34;&#34;
+        self.cache = {}
+        self.corpus_dir_path = corpus_dir_path
+    #ORDER 1_1_5_1_1
+    def __call__(self, expressions):
+        &#34;&#34;&#34;
+        FR : Compte ou retrouve le nombre de cooccurrences entre les expressions et
+        les mots du corpus.\n
+        EN : Count or retrieve the number of cooccurrences between the expressions 
+        and the corpus&#39; words\n
+        Params
+        ------
+        expressions : list&lt;(str,str)&gt;\n
+            FR : liste des expressions dont on veut les coccurrences\n
+            EN : list of the expressions of which we want the coccurrences\n
+        Returns
+        -------
+        exp_dic : dic{exp : (noun : str,verb : str) , cooc : dic{word : str , nb_cooc_exp_word : int}}\n
+            FR : Dictionnaire contenant pour chaque expression les mots avec lequelles celle-ci
+            cooccurre ainsi que le nombre de coccurences respective\n
+            EN : Dictionary with, for each expression, the word cooccurring with said expression and
+            the number of cooccurrence
+        See also
+        --------
+        expressions_cooccurrences
+        &#34;&#34;&#34;
+        # TODO rename abunchastuff
+        list_exp2 = [ex for ex in expressions if ex not in self.cache]
+        e = expressions_cooccurrences(self.corpus_dir_path, list_exp2)
+        for ex in list_exp2:
+            self.cache[ex] = {k: v for k,v in e[ex].items()}
+        return {ex : self.cache[ex] for ex in expressions}
+    # ORDER 1_1_5_3_1
+    def save_cache(self, name):
+        &#34;&#34;&#34;
+        FR : Enregistre le cache dans un fichier.\n
+        EN : SAve the cache in a file.\n
+        Params
+        ------
+        name : str\n
+            FR : nom sous lequel on désire enregistrer le cache.\n
+            EN : name under which the cache is to be saved.\n
+        &#34;&#34;&#34;
+        with open(path.join(SAVE_DIR, name), &#39;wb&#39;) as file:
+            pickle.dump(self.cache, file)
+    # ORDER 1_1_5_0_1
+    def load_cache(self, name):
+        &#34;&#34;&#34;
+        FR : Charge le cache depuis un fichier.\n
+        EN : Load the cache from a file.\n
+        Params
+        ------
+        name : str\n
+            FR : nom sous lequel le cache est enregistré.\n
+            EN : name under which the cache is saved.\n
+        &#34;&#34;&#34;
+        file_path = path.join(SAVE_DIR, name)
+        if path.isfile(file_path) :
+            with open(file_path, &#39;rb&#39;) as file:
+                self.cache = pickle.load(file)</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="lsa.cached_expressions_cooccurrences.load_cache"><code class="name flex">
+<span>def <span class="ident">load_cache</span></span>(<span>self, name)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Charge le cache depuis un fichier.</p>
+<p>EN : Load the cache from a file.</p>
+<h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>
+<p>FR : nom sous lequel le cache est enregistré.</p>
+<p>EN : name under which the cache is saved.</p>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def load_cache(self, name):
+    &#34;&#34;&#34;
+    FR : Charge le cache depuis un fichier.\n
+    EN : Load the cache from a file.\n
+    Params
+    ------
+    name : str\n
+        FR : nom sous lequel le cache est enregistré.\n
+        EN : name under which the cache is saved.\n
+    &#34;&#34;&#34;
+    file_path = path.join(SAVE_DIR, name)
+    if path.isfile(file_path) :
+        with open(file_path, &#39;rb&#39;) as file:
+            self.cache = pickle.load(file)</code></pre>
+</details>
+</dd>
+<dt id="lsa.cached_expressions_cooccurrences.save_cache"><code class="name flex">
+<span>def <span class="ident">save_cache</span></span>(<span>self, name)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Enregistre le cache dans un fichier.</p>
+<p>EN : SAve the cache in a file.</p>
+<h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>
+<p>FR : nom sous lequel on désire enregistrer le cache.</p>
+<p>EN : name under which the cache is to be saved.</p>
+</dd>
+</dl></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def save_cache(self, name):
+    &#34;&#34;&#34;
+    FR : Enregistre le cache dans un fichier.\n
+    EN : SAve the cache in a file.\n
+    Params
+    ------
+    name : str\n
+        FR : nom sous lequel on désire enregistrer le cache.\n
+        EN : name under which the cache is to be saved.\n
+    &#34;&#34;&#34;
+    with open(path.join(SAVE_DIR, name), &#39;wb&#39;) as file:
+        pickle.dump(self.cache, file)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="lsa.cached_expressions_vectors"><code class="flex name class">
+<span>class <span class="ident">cached_expressions_vectors</span></span>
+<span>(</span><span>word_id, sums, svd, exps_cooc)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>FR : Objet appelable (une fois initialisé, l'objet peut être appeler comme une fonction)
+renvoyant la représentation vectoriel des coocurrences d'une liste d'expressions</p>
+<p>EN : Callable object (once initialized, it can be called the same way a function does)
+returning the vectorial reprensation of the cooccurrences of the given list of expressions.</p>
+<h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>word_id</code></strong> :&ensp;<code>dic</code>{<code>str</code> -&gt; <code>int</code>}</dt>
+<dd>
+<p>FR : Dictionnaire des mots et leur id</p>
+<p>EN : Dictionnary of the words and their id</p>
+</dd>
+<dt><strong><code>sums</code></strong> :&ensp;<code>dic</code>{<code>str</code> -&gt; <code>int</code>}</dt>
+<dd>FR :
+EN :</dd>
+</dl>
+<p>svd :
+FR :
+EN :
+exps_cooc:
+FR :
+EN :</p></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">class cached_expressions_vectors:
+    &#34;&#34;&#34;
+    FR : Objet appelable (une fois initialisé, l&#39;objet peut être appeler comme une fonction)
+    renvoyant la représentation vectoriel des coocurrences d&#39;une liste d&#39;expressions\n
+    EN : Callable object (once initialized, it can be called the same way a function does)
+    returning the vectorial reprensation of the cooccurrences of the given list of expressions.\n
+    &#34;&#34;&#34;
+    #ORDER 1_1_4_4 
+    #TODOC
+    def __init__(self, word_id, sums, svd, exps_cooc):
+        &#34;&#34;&#34;
+        Params
+        ------
+        word_id : dic{str -&gt; int}\n
+            FR : Dictionnaire des mots et leur id\n
+            EN : Dictionnary of the words and their id\n
+        sums : dic{str -&gt; int}
+            FR : 
+            EN :
+        svd :
+            FR :
+            EN :
+        exps_cooc:
+            FR :
+            EN :
+        &#34;&#34;&#34;
+        self.exps_cooc = exps_cooc
+        self.cache = {}
+        self.word_id = word_id
+        self.sums = sums
+        self.svd = svd
+    # TODO rename abuchastuff
+    #ORDER 1_1_5_1
+    #TODOC 
+    def __call__(self, list_exp):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        e = self.exps_cooc(list_exp)
+        list_exp2 = [ex for ex in list_exp if ex not in self.cache]
+        a = dic_to_vec(e, self.word_id, self.sums)
+        b = self.svd.transform(a)
+        for ex, c in zip(list_exp2, b):
+            self.cache[ex] = c
+        return [self.cache[ex] for ex in list_exp]
+    # ORDER 1_1_5_3_2
+    #TODOC
+    def save_cache(self, name):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        with open(path.join(SAVE_DIR, name), &#39;wb&#39;) as file:
+            pickle.dump(self.cache, file)
+    # ORDER 1_1_5_0_2
+    #TODOC
+    def load_cache(self, name):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        file_path = path.join(SAVE_DIR, name)
+        if path.isfile(file_path) :
+            with open(file_path, &#39;rb&#39;) as file:
+                self.cache = pickle.load(file)</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="lsa.cached_expressions_vectors.load_cache"><code class="name flex">
+<span>def <span class="ident">load_cache</span></span>(<span>self, name)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def load_cache(self, name):
+    &#34;&#34;&#34;
+    &#34;&#34;&#34;
+    file_path = path.join(SAVE_DIR, name)
+    if path.isfile(file_path) :
+        with open(file_path, &#39;rb&#39;) as file:
+            self.cache = pickle.load(file)</code></pre>
+</details>
+</dd>
+<dt id="lsa.cached_expressions_vectors.save_cache"><code class="name flex">
+<span>def <span class="ident">save_cache</span></span>(<span>self, name)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>Source code</summary>
+<pre><code class="python">def save_cache(self, name):
+    &#34;&#34;&#34;
+    &#34;&#34;&#34;
+    with open(path.join(SAVE_DIR, name), &#39;wb&#39;) as file:
+        pickle.dump(self.cache, file)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="lsa.corpus_cooccurrences" href="#lsa.corpus_cooccurrences">corpus_cooccurrences</a></code></li>
+<li><code><a title="lsa.dic_to_mat" href="#lsa.dic_to_mat">dic_to_mat</a></code></li>
+<li><code><a title="lsa.dic_to_vec" href="#lsa.dic_to_vec">dic_to_vec</a></code></li>
+<li><code><a title="lsa.expressions_cooccurrences" href="#lsa.expressions_cooccurrences">expressions_cooccurrences</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="lsa.LSA" href="#lsa.LSA">LSA</a></code></h4>
+<ul class="">
+<li><code><a title="lsa.LSA.load_cache" href="#lsa.LSA.load_cache">load_cache</a></code></li>
+<li><code><a title="lsa.LSA.save_cache" href="#lsa.LSA.save_cache">save_cache</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="lsa.cached_expressions_cooccurrences" href="#lsa.cached_expressions_cooccurrences">cached_expressions_cooccurrences</a></code></h4>
+<ul class="">
+<li><code><a title="lsa.cached_expressions_cooccurrences.load_cache" href="#lsa.cached_expressions_cooccurrences.load_cache">load_cache</a></code></li>
+<li><code><a title="lsa.cached_expressions_cooccurrences.save_cache" href="#lsa.cached_expressions_cooccurrences.save_cache">save_cache</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="lsa.cached_expressions_vectors" href="#lsa.cached_expressions_vectors">cached_expressions_vectors</a></code></h4>
+<ul class="">
+<li><code><a title="lsa.cached_expressions_vectors.load_cache" href="#lsa.cached_expressions_vectors.load_cache">load_cache</a></code></li>
+<li><code><a title="lsa.cached_expressions_vectors.save_cache" href="#lsa.cached_expressions_vectors.save_cache">save_cache</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.6.3</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
