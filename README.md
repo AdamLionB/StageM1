@@ -73,6 +73,7 @@ Commande utile lors de la recherche d'hyperparamètre pour le classifieur.
 
 
 `python pred.py -reset full -predict -corpus_dir ~/autre_corpus`
+
 Cette commande supprime toutes précedente sauvegarde et effectue une prédiction sur le corpus
 se trouvant dans le répertoire ~/autre_corpus. 
 
